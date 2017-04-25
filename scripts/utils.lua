@@ -1,7 +1,8 @@
 
-local utils = {}
 
 local path = require 'pl.path'
+
+local utils = {}
 
 local function endsWith(s, suffix)
   return #s >= #suffix and s:find(suffix, #s - #suffix + 1, true)
@@ -26,11 +27,11 @@ end
 function utils.unpackLibPlatformInfo( libsRootPath, libPlatformInfo )
   local rootPath, projectPath, buildEngine, libNameRelease, libNameDebug = unpack( libPlatformInfo )
 
-  if rootPath ~= nil and not path.isabsolute( rootPath ) then 
+  if rootPath ~= nil and not path.isabs( rootPath ) then 
     rootPath = libsRootPath .. '/' .. rootPath 
   end
 
-  if projectPath ~= nil and not path.isabsolute( projectPath ) then 
+  if projectPath ~= nil and not path.isabs( projectPath ) then 
     projectPath = libsRootPath .. '/' .. projectPath 
   end
   
@@ -39,14 +40,14 @@ function utils.unpackLibPlatformInfo( libsRootPath, libPlatformInfo )
     parts = string.explode( includePath, ';' ) 
     includePath = ""
     for _,v in pairs(parts) do
-      if not path.isabsolute( v ) then 
+      if not path.isabs( v ) then 
         v = libsRootPath .. '/' .. v
       end
       includePath = includePath .. v .. ';'
     end
   end
   
-  if libPath ~= nil and not path.isabsolute( libPath ) then 
+  if libPath ~= nil and not path.isabs( libPath ) then 
     libPath = libsRootPath .. '/' .. libPath 
   end
 

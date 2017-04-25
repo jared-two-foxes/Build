@@ -126,6 +126,38 @@ project "Lua"
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 
+project "lfs"
+  kind "SharedLib"
+  language "C"
+
+  includedirs {
+    "includes",
+    "lua/src",
+  }
+
+  -- Add all the lua library files
+  files {
+    "luafilesystem/src/lfs.c", 
+    "luafilesystem/src/lfs.h",  }
+
+  links {
+    'Lua'
+  }
+
+  filter 'configurations:debug'
+    defines { "DEBUG" }
+    flags { "Symbols" }       
+    targetdir ( path.join(baseLocation, "Bin/Debug") )
+
+  filter 'configurations:release'
+    defines { "NDEBUG" }
+    flags { "Optimize" }      
+    targetdir ( path.join(baseLocation, "Bin/Release") )
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 project "Build"
   kind "ConsoleApp"
   language "C++"
@@ -140,7 +172,8 @@ project "Build"
   }
 
   links {
-    'Lua'
+    'Lua',
+    'lfs',
   }
 
   filter 'configurations:debug'

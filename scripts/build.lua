@@ -1,11 +1,11 @@
 
 local utils = require 'scripts.utils'
-
+local path  = require 'pl.path'
 
 local build = {}
 
 local function SetupEnvironment()
-  ok, err = os.chdir( "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build" )
+  ok, err = path.chdir( "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build" )
   if ( not ok ) then
     print( "err: " .. err )
   end
@@ -21,9 +21,6 @@ function build.compile( libraries, libsRootPath )
   -- Setup the build environment
   --SetupEnvironment()
 
-  local pretty = require 'pl.pretty'
-  pretty.print_r( libraries )
-
   for libName, libDef in pairs( libraries ) do
     local rootPath, projectPath, buildEngine, libNameRelease, libNameDebug = utils.unpackLibPlatformInfo( libsRootPath, libDef )
 
@@ -34,7 +31,7 @@ function build.compile( libraries, libsRootPath )
 
 
       -- Enter the Root directory for this dependency
-      ok, err = os.chdir( rootPath )
+      ok, err = path.chdir( rootPath )
       if( not ok ) then
         print( "err:" .. err )
       else
@@ -52,7 +49,7 @@ function build.compile( libraries, libsRootPath )
           end
 
           -- Navigate to the build directory 
-          os.chdir( "build" )
+          path.chdir( "build" )
           print( os.getcwd() )
 
           -- Run the solution builder process
