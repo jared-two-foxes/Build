@@ -1,90 +1,92 @@
--- Format: { rootPath, projectPath, 'buildSystem', libname (release), libname (debug)? } 
+-- Format: { rootPath, 'buildSystem', libname (release), libname (debug)? } 
+
+-- @todo: Add version support.
+-- @todo: Add in dependencies for global projects
 
 return {
   boost = {   
-    'boost',    
-    nil,                  
+    'D:/Develop/Nebulous/Externals/boost',                 
     'boost.build',
+    nil,
     nil,
     nil,
   },
 
   jsoncpp = {  
-    'jsoncpp',
-    nil,            
+    'D:/Develop/Nebulous/Externals/jsoncpp',      
     'cmake',
+    nil,
     'jsoncpp.lib',
     'jsoncppd.lib',
   },
 
    brofiler = {
-    'Brofiler-1.1.1',       
-    nil,             
+    'D:/Develop/Nebulous/Externals/Brofiler-1.1.1',             
+    nil,
     nil,
     'ProfilerCore64.lib',
     'ProfilerCore64.lib',
   },
 
   zlib = {
-    'zlib',  
-    nil,                
+    'D:/Develop/Nebulous/Externals/zlib',            
     'cmake',
+    nil,
     'zlib.lib',
     'zlibd.lib',
   },
 
   libpng = {
-    'libpng',  
-    nil,
+    'D:/Develop/Nebulous/Externals/libpng',
     'cmake',
+    'zlib',
     'libpng16.lib',
     'libpng16d.lib',
   },
 
   freetype = {   
-    'freetype2',  
-    nil,            
+    'D:/Develop/Nebulous/Externals/freetype2',        
     'cmake',
+    nil,
     'freetype.lib',
     'freetyped.lib',
   },
 
   utf8 = {   
-    'utf8',                    
-    nil,                                
+    'D:/Develop/Nebulous/Externals/utf8',                              
+    nil,
     nil,
     nil,
     nil 
   },
 
   lua = {  
-    'luaDist',   
-    nil,   
+    'D:/Develop/Nebulous/Externals/luaDist',  
     'cmake',             
+    nil,
     'lua.lib',
     'luad.lib',
   },
 
   libogg = {  
-    'libogg',   
-    nil,  
+    'D:/Develop/Nebulous/Externals/libogg',   
     'cmake',             
     'ogg.lib',
     'oggd.lib',
   },
 
   libvorbis = {  
-    'libvorbis',   
-    nil,
+    'D:/Develop/Nebulous/Externals/libvorbis',   
     'cmake',             
+    'libogg',
     'vorbis.lib;vorbisenc.lib;vorbisfile.lib',
     'vorbisd.lib;vorbisencd.lib;vorbisfiled.lib',
   },
 
   openal = {  
-    'openal-soft',   
-    nil,  
-    'cmake',             
+    'D:/Develop/Nebulous/Externals/openal-soft',
+    'cmake',
+    'libogg,libvorbis',             
     'OpenAL32.lib',
     'OpenAL32d.lib',
   },

@@ -1,28 +1,67 @@
 
-local utils = require 'scripts.utils'
-local path  = require 'pl.path'
+local path      = require 'pl.path'
+local libraries = require 'scripts.libraries' --root library file
 
 local build = {}
 
-local function SetupEnvironment()
-  ok, err = path.chdir( "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build" )
-  if ( not ok ) then
-    print( "err: " .. err )
+local function SetupEnvironment( system )
+  print( "Setting up Environment" )
+  if system == "msvc" then
+    -- @todo: Determine which flavour of msvc were looking at?
   end
+
+  if system == "msvc-14.0" then
+    print( "Changing directory for msvc-14.0 build" )
+    ok, err = path.chdir( "C:/Program Files (x86)/Microsoft Visual Studio 14.0/VC" )
+    if ( not ok ) then
+      print( "err: " .. err )
+    end
+  elseif system == "msvc-14.1" then
+    print( "Changing directory for msvc-14.1 build" )
+    ok, err = path.chdir( "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build" )
+    if ( not ok ) then
+      print( "err: " .. err )
+    end
+  end
+  print( "executing: vcvarsall x64" )
   os.execute( "vcvarsall x64" )
   print()
 end
 
+function build.build( project, environment )
+{
+  -- @todo:  Recursively build all the dependencies for the project (some dependencies may have other dependencies etc, etc)
+
+  -- Combine the libraries found in the project file and the root projects (override with project option where applicable)
+  local combined_libraries = {}
+  if project.libraries then
+    combined_libraries = tablex.union( libraries, project.libraries )
+  else
+    combined_libraries = libraries
+  end
+
+  -- Extract the dependency information 
+  local dependencies = tablex.intersection( combined_libraries, project.dependencies )
+
+  -- Execute the setup & install steps for the 
+  build.compile( dependencies, environment )
+  build.install( dependencies )
+
+  -- Build the actual project solution/workspace
+  build.generate( project.system )
+}
+
+
 -- @todo - Seperate the Preload the CMakeCache file. (Configure step). ??
 -- @todo - Allow for clean building of dependencies by deleting cached files ??
 -- @todo - Seperate the build list from the library list...
-function build.compile( libraries, libsRootPath )
+function build.compile( libraries, environment )
   
   -- Setup the build environment
-  --SetupEnvironment()
+  SetupEnvironment( environment )
 
   for libName, libDef in pairs( libraries ) do
-    local rootPath, projectPath, buildEngine, libNameRelease, libNameDebug = utils.unpackLibPlatformInfo( libsRootPath, libDef )
+    local rootPath, buildEngine, dependencies, libNameRelease, libNameDebug = unpack( libDef )
 
     if ( buildEngine ~= nil ) then
       print( "===========================================================" )
@@ -44,13 +83,13 @@ function build.compile( libraries, libsRootPath )
           -- end
 
           -- create the directory and enter it
-          if not os.isdir( "build" ) then 
-            os.mkdir( "build" )
+          if not path.isdir( "build" ) then 
+            path.mkdir( "build" )
           end
 
           -- Navigate to the build directory 
           path.chdir( "build" )
-          print( os.getcwd() )
+          print( path.currentdir() )
 
           -- Run the solution builder process
           -- Attempt to build with the specified compilier
@@ -84,5 +123,14 @@ function build.compile( libraries, libsRootPath )
     end
   end
 end
+ 
+function build.install( libraries ) 
+  
+end
+
+function build.generate( system )
+
+end
+
 
 return build
