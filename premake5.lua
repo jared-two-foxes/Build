@@ -76,7 +76,7 @@ project "Lua"
   language "C"
 
   includedirs {
-    "includes",
+    "include",
     "lua/src",
   }
 
@@ -131,7 +131,7 @@ project "lfs"
   language "C"
 
   includedirs {
-    "includes",
+    "include",
     "lua/src",
   }
 
@@ -163,7 +163,7 @@ project "Build"
   language "C++"
 
   includedirs {
-    "includes",
+    "include",
     "lua/src",
   }
 

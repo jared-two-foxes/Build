@@ -5,7 +5,7 @@
 
 dependenciesRoot = 'C:/Develop/Build'
 package.path = package.path .. ";" .. dependenciesRoot .. "/?.lua;" .. "C:/Develop/Build/Bin/Release/?.lua"
-package.cpath = package.cpath .. ";" .. dependenciesRoot .. "/Bin/Release/?.dll" 
+package.cpath = package.cpath .. ";" .. dependenciesRoot .. "/Bin/?.dll" 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 
