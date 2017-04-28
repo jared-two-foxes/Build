@@ -26,7 +26,7 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 
 baseLocation             = path.getabsolute("./")
-solutionLocation         = path.getabsolute("Project")
+solutionLocation         = path.getabsolute("build")
 
 if( false == os.isdir(solutionLocation) ) then
   os.mkdir( solutionLocation )
@@ -116,12 +116,12 @@ project "Lua"
     defines { "DEBUG" }
     flags { "Symbols" }       
     targetsuffix '_d'
-    targetdir ( path.join(baseLocation, "Lib/Debug") )
+    targetdir ( path.join(baseLocation, "Lib") )
 
   filter 'configurations:release'
     defines { "NDEBUG" }
     flags { "Optimize" }      
-    targetdir ( path.join(baseLocation, "Lib/Release") )
+    targetdir ( path.join(baseLocation, "Lib") )
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -147,12 +147,12 @@ project "lfs"
   filter 'configurations:debug'
     defines { "DEBUG" }
     flags { "Symbols" }       
-    targetdir ( path.join(baseLocation, "Bin/Debug") )
+    targetdir ( path.join(baseLocation, "Bin") )
 
   filter 'configurations:release'
     defines { "NDEBUG" }
     flags { "Optimize" }      
-    targetdir ( path.join(baseLocation, "Bin/Release") )
+    targetdir ( path.join(baseLocation, "Bin") )
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -180,9 +180,9 @@ project "Build"
     defines { "DEBUG" }
     flags { "Symbols" }       
     targetsuffix '_d'
-    targetdir ( path.join(baseLocation, "Bin/Debug") )
+    targetdir ( path.join(baseLocation, "Bin") )
 
   filter 'configurations:release'
     defines { "NDEBUG" }
     flags { "Optimize" }      
-    targetdir ( path.join(baseLocation, "Bin/Release") )
+    targetdir ( path.join(baseLocation, "Bin") )

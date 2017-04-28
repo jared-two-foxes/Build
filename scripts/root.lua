@@ -3,38 +3,26 @@
 -- v0.0.1
 --
 
-dependenciesRoot = 'D:/Develop/Build'
-package.path = package.path .. ";" .. dependenciesRoot .. "/?.lua"
+dependenciesRoot = 'C:/Develop/Build'
+package.path = package.path .. ";" .. dependenciesRoot .. "/?.lua;" .. "C:/Develop/Build/Bin/Release/?.lua"
+package.cpath = package.cpath .. ";" .. dependenciesRoot .. "/Bin/Release/?.dll" 
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 
+local build   = require 'scripts.build'
+local project = require 'project'
+local path    = require 'pl.path'
 
-local tablex    = require 'pl.tablex'
-local path      = require 'pl.path'
-local pretty    = require "pl.pretty"
-local build     = require 'scripts.build'
-local libraries = require 'scripts.libraries' --root library file
-local project   = require 'project'
-
-print( 'Root Build script!' )
-print( path.currentdir() )
-
--- @todo:  Recursively build all the dependencies for the project (some dependencies may have other dependencies etc, etc)
-
--- Combine the libraries found in the project file and the root projects (override with project option where applicable)
-local combined_libraries = {}
-if project.libraries then
-  combined_libraries = tablex.union( libraries, project.libraries )
-else
-  combined_libraries = libraries
+if not project.path then
+  project.path = path.currentdir()
 end
 
--- Extract the dependency information 
-local dependencies = tablex.intersection( combined_libraries, project.dependencies )
+-- create the 'build' directory and enter it
+if not path.isdir( "build" ) then 
+  path.mkdir( "build" )
+end
 
--- Execute the setup & install steps for the 
-build.compile( dependencies, "msvc-14.0" )
-build.install( dependencies )
+path.chdir( "build" )
 
--- Build the actual project solution/workspace
-build.generate( project.system )
+-- Recursively build all the dependencies for the project (some dependencies may have other dependencies etc, etc)
+build.build( project, "msvc-14.1" )
