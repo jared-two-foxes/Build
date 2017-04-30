@@ -117,7 +117,12 @@ function build.compile( project )
     os.execute( "msbuild install.vcxproj /p:configuration=release;platform=x64;WarningLevel=0" ) -- /v:q" )
     print()
   elseif project.system == "premake5" then
-    os.execute( "msbuild /p:configuration=release;platform=x64;WarningLevel=0" ) -- /v:q" )
+    local cmd = "msbuild "
+    cmd = cmd .. project.name .. ".sln "
+    cmd = cmd .. "/p:configuration=release;platform=x64;WarningLevel=0"
+    -- /v:q" )
+    print( cmd )
+    os.execute( cmd ) 
     print()
   elseif ( project.system == "boost.build" ) then
     -- Build and install!

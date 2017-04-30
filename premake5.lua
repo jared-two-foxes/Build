@@ -35,10 +35,10 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 
-workspace "Nebulae.Build"
+workspace "Build"
   configurations { "debug", "release" }
   language "C"
-  location( solutionLocation )
+  location( solutionLocation .. "/Build" )
   flags { "Symbols", "NoMinimalRebuild", "NoEditAndContinue", "FloatFast" }
 
   defines {
