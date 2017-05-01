@@ -24,7 +24,7 @@ static lua_State *globalL = NULL;
 
 static const char *progname = LUA_PROGNAME;
 
-static const char *BUILD_FILE_NAME = "D:/Develop/Build/scripts/root.lua";
+static const char *BUILD_FILE_NAME = "C:/Develop/Build/src/root.lua";
 
 
 static void lstop (lua_State *L, lua_Debug *ar) {

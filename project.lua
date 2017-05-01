@@ -2,7 +2,7 @@ local project = {}
 
 project.name = 'Build'
 project.libraries = {}
-project.dependencies = { "openal", "jsoncpp" }
+project.dependencies = {}
 project.system = 'premake5'
 
 return project
