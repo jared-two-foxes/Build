@@ -59,7 +59,7 @@ function build.build( project, environment, installDir )
   build.compile( project, environment )
 
   -- Install compiled projects to the correct locations.
-  --build.install( project )
+  build.install( project )
 
   -- return to the original path.
   path.chdir( p ) 
@@ -96,9 +96,7 @@ function build.generate( project, environment, installDir )
   elseif ( project.system == "boost.build" ) then
     -- Modular boost via git requires that we call this to copy all them headers to the right location.
     os.execute( "b2 headers" )
-    
-    -- Build and install?
-    --os.execute( "b2 --toolset=msvc-14.0 --build-type=complete address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=built -j8 install" )
+    os.execute( "b2 --toolset=" .. environment .. " --build-type=complete address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=built -j8 install" )
   end 
 
   print( "done" )
@@ -109,29 +107,39 @@ end
 -- @todo - Seperate the Preload the CMakeCache file. (Configure step). ??
 -- @todo - Allow for clean building of dependencies by deleting cached files ??
 -- @todo - Seperate the build list from the library list...
-function build.compile( project )
+function build.compile( project, environment )
   if project.system == "premake5" or project.system == "cmake"  then
     local cmd = "msbuild "
     cmd = cmd .. project.name .. ".sln "
     local debugCmd   = cmd .. "/p:configuration=debug;platform=x64;WarningLevel=0" --v:q"
     local releaseCmd = cmd .. "/p:configuration=release;platform=x64;WarningLevel=0" --v:q"
     
-    os.execute( debugCmd ) 
-    os.execute( releaseCmd )
+    local debugResult = os.execute( debugCmd ) 
+    local releaseResult = os.execute( releaseCmd )
     print()
   elseif ( project.system == "boost.build" ) then
     -- Build and install!
-    os.execute( "b2 --toolset=msvc-14.1 --build-type=complete address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=built -j8 install" )
+    os.execute( "b2 --toolset=" .. environment .. " --build-type=complete address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=built -j8 install" )
     print()
   end
 
   print( "done" )
   print()
+
+  return releaseResult
 end
  
 
 function build.install( project ) 
-  
+  if project.system == "cmake"  then
+    local cmd = "msbuild INSTALL.vcxproj "
+    local debugCmd   = cmd .. "/p:configuration=debug;platform=x64"
+    local releaseCmd = cmd .. "/p:configuration=release;platform=x64"
+
+    os.execute( debugCmd ) 
+    os.execute( releaseCmd )
+    print()
+  end
 end
 
 
