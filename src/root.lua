@@ -26,11 +26,11 @@ if not project.path then
 end
 
 -- create the 'build' directory and enter it
-if not path.isdir( "build" ) then 
-  path.mkdir( "build" )
+if not path.isdir( "Projects" ) then 
+  path.mkdir( "Projects" )
 end
 
-path.chdir( "build" )
+path.chdir( "Projects" )
 
 -- Recursively build all the dependencies for the project (some dependencies may have other dependencies etc, etc)
 build.build( project, "msvc-14.1" )

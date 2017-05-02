@@ -4,6 +4,8 @@ local libraries = require 'libraries' --root library file
 local path      = require 'pl.path'
 local pretty    = require 'pl.pretty'
 local tablex    = require 'pl.tablex'
+local file      = require 'pl.file'
+local dir       = require 'pl.dir'
 
 local build = {}
 
@@ -17,7 +19,7 @@ function build.build( project, environment, installDir )
 
   local local_install_dir = ''
   if not installDir then
-    local_install_dir = project.path
+    local_install_dir = project.path .. "/Externals"
   else
     local_install_dir = installDir
   end
@@ -59,7 +61,7 @@ function build.build( project, environment, installDir )
   build.compile( project, environment )
 
   -- Install compiled projects to the correct locations.
-  build.install( project )
+  build.install( project, installDir )
 
   -- return to the original path.
   path.chdir( p ) 
@@ -130,7 +132,7 @@ function build.compile( project, environment )
 end
  
 
-function build.install( project ) 
+function build.install( project, installDir ) 
   if project.system == "cmake"  then
     local cmd = "msbuild INSTALL.vcxproj "
     local debugCmd   = cmd .. "/p:configuration=debug;platform=x64"
@@ -139,6 +141,16 @@ function build.install( project )
     os.execute( debugCmd ) 
     os.execute( releaseCmd )
     print()
+  elseif project.system == "premake5" then
+    -- Premake doesnt support compiling and it definitely doesnt support installing.  Furthermore we probably dont actually want to install unless this isn't the 'toplevel' project which is signified by installDir not being set.
+    if installDir then
+      local files = dir.getallfiles( project.path .. "/Source", "**.hpp" )
+
+      for i, file in pairs(files) do
+        local relpath = path.relpath( file, project.path .. "/Source" )
+        file.copy( file, path.join( installDir, project.name, relpath ) )
+      end
+    end
   end
 end
 
