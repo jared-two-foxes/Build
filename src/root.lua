@@ -33,4 +33,4 @@ end
 path.chdir( "Projects" )
 
 -- Recursively build all the dependencies for the project (some dependencies may have other dependencies etc, etc)
-build.build( project, "msvc-14.1" )
+build.build( project, "msvc-14.1", "Release" )

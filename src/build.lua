@@ -12,7 +12,7 @@ local build = {}
 
 -- Recursively builds all the dependencies for the project and generates the solution file for this project
 -- (some dependencies may have other dependencies etc, etc)
-function build.build( project, environment, installDir )
+function build.build( project, environment, configuration, installDir )
   local local_install_dir = ''
   if not installDir then
     local_install_dir = project.path
@@ -38,7 +38,7 @@ function build.build( project, environment, installDir )
     
     -- Recurse the build call on each dependency.
     for key, prj in pairs(dependencies) do
-      build.build( prj, environment, local_install_dir )
+      build.build( prj, environment, configuration, local_install_dir )
     end
   end
 
@@ -58,10 +58,10 @@ function build.build( project, environment, installDir )
   build.generate( project, environment, installDir )
 
   -- Compile the project
-  build.compile( project, environment, "release" )
+  build.compile( project, environment, configuration )
 
   -- Install compiled projects to the correct locations.
-  build.install( project, installDir, "release" )
+  build.install( project, installDir, configuration )
 
   -- return to the original path.
   path.chdir( p ) 
@@ -100,9 +100,17 @@ function build.generate( project, environment, installDir )
     os.execute( cmd )
     print()
   elseif ( project.system == "boost.build" ) then
+    local p = path.currentdir()
+
+    path.chdir( project.path )
+
     -- Modular boost via git requires that we call this to copy all them headers to the right location.
-    os.execute( "b2 headers" )
-    os.execute( "b2 --toolset=" .. environment .. " --build-type=complete address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=built -j8 install" )
+    --os.execute( "b2 headers" )
+
+    local cmd = "b2 --toolset=" .. environment .. " --build-type=complete address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=" .. installDir .. " -j8 install"
+    os.execute( cmd )
+
+    path.chdir( p )
   end 
 
   print()
@@ -129,9 +137,7 @@ function build.compile( project, environment, configuration )
     os.execute( buildCmd ) 
     print()
   elseif ( project.system == "boost.build" ) then
-    -- Build and install!
-    os.execute( "b2 --toolset=" .. environment .. " --build-type=complete address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=built -j8 install" )
-    print()
+
   end
 
   print()
@@ -186,7 +192,6 @@ function build.install( project, installDir, configuration )
 
     -- Binaries
     local binFiles = dir.getallfiles( "./", "**.exe|**.dll" )
-    print( binFiles )
     for i, filename in pairs( binFiles ) do
       _, name = path.splitpath( filename )
       local dst = path.join( p, "Bin", name ) -- determine the destination file.
