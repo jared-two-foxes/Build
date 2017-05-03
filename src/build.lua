@@ -13,13 +13,9 @@ local build = {}
 -- Recursively builds all the dependencies for the project and generates the solution file for this project
 -- (some dependencies may have other dependencies etc, etc)
 function build.build( project, environment, installDir )
-  print( "===========================================================" )
-  print( "Building " .. project.name )
-  print()
-
   local local_install_dir = ''
   if not installDir then
-    local_install_dir = project.path .. "/Externals"
+    local_install_dir = project.path
   else
     local_install_dir = installDir
   end
@@ -46,6 +42,10 @@ function build.build( project, environment, installDir )
     end
   end
 
+  print( "===========================================================" )
+  print( "Building " .. project.name )
+  print()
+
   local p = path.currentdir()
 
   -- Create a folder for the project in the 'build' directory and enter it
@@ -58,10 +58,10 @@ function build.build( project, environment, installDir )
   build.generate( project, environment, installDir )
 
   -- Compile the project
-  build.compile( project, environment )
+  build.compile( project, environment, "release" )
 
   -- Install compiled projects to the correct locations.
-  build.install( project, installDir )
+  build.install( project, installDir, "release" )
 
   -- return to the original path.
   path.chdir( p ) 
@@ -83,7 +83,11 @@ function build.generate( project, environment, installDir )
     -- Run the solution builder process
     -- Attempt to build with the specified compilier
     -- Set the output directory to install the files.
-    local cmd = project.system .. ' -G"Visual Studio 15 2017 Win64"' .. ' -DCMAKE_DEBUG_POSTFIX="d"'
+    local cmd = project.system .. ' -G"Visual Studio 15 2017 Win64"' 
+
+    if project.naming == "standard " then
+      cmd = cmd .. ' -DCMAKE_DEBUG_POSTFIX="d"'
+    end
 
     if installDir then
       cmd = cmd .. ' -DCMAKE_INSTALL_PREFIX="' .. installDir .. '"';
@@ -101,23 +105,28 @@ function build.generate( project, environment, installDir )
     os.execute( "b2 --toolset=" .. environment .. " --build-type=complete address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=built -j8 install" )
   end 
 
-  print( "done" )
   print()
 end
 
+-- "/p:configuration=debug;platform=x64;WarningLevel=0" --v:q"
 
 -- @todo - Seperate the Preload the CMakeCache file. (Configure step). ??
 -- @todo - Allow for clean building of dependencies by deleting cached files ??
 -- @todo - Seperate the build list from the library list...
-function build.compile( project, environment )
-  if project.system == "premake5" or project.system == "cmake"  then
-    local cmd = "msbuild "
-    cmd = cmd .. project.name .. ".sln "
-    local debugCmd   = cmd .. "/p:configuration=debug;platform=x64;WarningLevel=0" --v:q"
-    local releaseCmd = cmd .. "/p:configuration=release;platform=x64;WarningLevel=0" --v:q"
-    
-    local debugResult = os.execute( debugCmd ) 
-    local releaseResult = os.execute( releaseCmd )
+function build.compile( project, environment, configuration )
+  if project.system == "premake5" or project.system == "cmake" then
+    local cmd  = "devenv " 
+    if project.solution ~= nil then
+      cmd = cmd .. project.solution .. ".sln"
+    else
+      cmd = cmd .. project.name .. ".sln"
+    end
+    local conf = " /Build " .. configuration
+    local out  = " /out ReleaseLog.txt"
+
+    local buildCmd   = cmd .. conf  -- .. out
+    print( buildCmd )
+    os.execute( buildCmd ) 
     print()
   elseif ( project.system == "boost.build" ) then
     -- Build and install!
@@ -125,31 +134,70 @@ function build.compile( project, environment )
     print()
   end
 
-  print( "done" )
   print()
-
-  return releaseResult
 end
  
 
-function build.install( project, installDir ) 
+function build.install( project, installDir, configuration ) 
   if project.system == "cmake"  then
-    local cmd = "msbuild INSTALL.vcxproj "
-    local debugCmd   = cmd .. "/p:configuration=debug;platform=x64"
-    local releaseCmd = cmd .. "/p:configuration=release;platform=x64"
+    local cmd  = "devenv " 
+    if project.solution ~= nil then
+      cmd = cmd .. project.solution .. ".sln"
+    else
+      cmd = cmd .. project.name .. ".sln"
+    end
+    local conf = " /Build " .. configuration
+    local project  = " /project INSTALL.vcxproj"
 
-    os.execute( debugCmd ) 
-    os.execute( releaseCmd )
+    local buildCmd   = cmd .. conf .. project  
+    os.execute( buildCmd ) 
     print()
   elseif project.system == "premake5" then
     -- Premake doesnt support compiling and it definitely doesnt support installing.  Furthermore we probably dont actually want to install unless this isn't the 'toplevel' project which is signified by installDir not being set.
     if installDir then
-      local files = dir.getallfiles( project.path .. "/Source", "**.hpp" )
-
-      for i, file in pairs(files) do
-        local relpath = path.relpath( file, project.path .. "/Source" )
-        file.copy( file, path.join( installDir, project.name, relpath ) )
+      -- Headers
+      local headerFiles = dir.getallfiles( project.path .. "/Source", "**.hpp" )
+      for i, filename in pairs(headerFiles) do
+        local relpath = path.relpath( filename, project.path .. "/Source" )
+        file.copy( filename, path.join( installDir, "include", project.name, relpath ) )
       end
+    end
+
+    -- Determine the 'root' level for install
+    local p = project.path
+    if installDir ~= nil then
+      p = installDir 
+    end
+
+    -- Copy Library files
+    local libraryFiles = dir.getallfiles( "./", "**.lib" )
+    for i, filename in pairs( libraryFiles ) do
+      _, name = path.splitpath( filename )    -- Grab the filename
+      local dst = path.join( p, "Lib", name ) -- determine the destination file.
+      local dstDir, _ = path.splitpath( dst ) -- Split the destination to grab out the directory portion.
+      if not path.isdir( dstDir ) then        -- Check if the directory exists.
+        local ret, err = path.mkdir( dstDir ) -- Attempt to make the directory if it doesnt.
+        if not ret then                       -- Check that the directory creation succeeded.
+          print( "Error: " + err )
+        end
+      end
+      file.copy( path.abspath( filename ), dst )  -- Copy the file.
+    end
+
+    -- Binaries
+    local binFiles = dir.getallfiles( "./", "**.exe|**.dll" )
+    print( binFiles )
+    for i, filename in pairs( binFiles ) do
+      _, name = path.splitpath( filename )
+      local dst = path.join( p, "Bin", name ) -- determine the destination file.
+      local dstDir, _ = path.splitpath( dst ) -- Split the destination to grab out the directory portion.
+      if not path.isdir( dstDir ) then        -- Check if the directory exists.
+        local ret, err = path.mkdir( dstDir ) -- Attempt to make the directory if it doesnt.
+        if not ret then                       -- Check that the directory creation succeeded.
+          print( "Error: " + err )
+        end
+      end
+      file.copy( path.abspath( filename ), dst )  -- Copy the file.
     end
   end
 end
