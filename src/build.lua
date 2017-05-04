@@ -55,7 +55,7 @@ function build.build( project, environment, configuration, installDir )
   path.chdir( project.name )
 
   -- Build the project solution/workspace
-  build.generate( project, environment, installDir )
+  build.generate( project, environment, configuration, installDir )
 
   -- Compile the project
   build.compile( project, environment, configuration )
@@ -68,7 +68,7 @@ function build.build( project, environment, configuration, installDir )
 end
 
 
-function build.generate( project, environment, installDir )
+function build.generate( project, environment, configuration, installDir )
   if project.system == 'premake5' then
     local cmd = "premake5" .. " vs2017 --file=" .. project.path .."/premake5.lua"
     print( cmd )
@@ -93,6 +93,12 @@ function build.generate( project, environment, installDir )
       cmd = cmd .. ' -DCMAKE_INSTALL_PREFIX="' .. installDir .. '"';
     end
 
+    if project.build_defines ~= nil then
+      for key, value in pairs( project.build_defines ) do
+        cmd = cmd .. ' -D' .. key .. "=" .. value
+      end
+    end
+
     cmd = cmd .. " " .. project.path
 
     -- Generate solution
@@ -101,13 +107,9 @@ function build.generate( project, environment, installDir )
     print()
   elseif ( project.system == "boost.build" ) then
     local p = path.currentdir()
-
     path.chdir( project.path )
 
-    -- Modular boost via git requires that we call this to copy all them headers to the right location.
-    --os.execute( "b2 headers" )
-
-    local cmd = "b2 --toolset=" .. environment .. " --build-type=complete address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=" .. installDir .. " -j8 install"
+    local cmd = "b2 --toolset=" .. environment .. " --variant=" .. configuration .. " address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=" .. installDir .. " -j8 install"
     os.execute( cmd )
 
     path.chdir( p )
@@ -120,7 +122,6 @@ end
 
 -- @todo - Seperate the Preload the CMakeCache file. (Configure step). ??
 -- @todo - Allow for clean building of dependencies by deleting cached files ??
--- @todo - Seperate the build list from the library list...
 function build.compile( project, environment, configuration )
   if project.system == "premake5" or project.system == "cmake" then
     local cmd  = "devenv " 
@@ -130,9 +131,8 @@ function build.compile( project, environment, configuration )
       cmd = cmd .. project.name .. ".sln"
     end
     local conf = " /Build " .. configuration
-    local out  = " /out ReleaseLog.txt"
 
-    local buildCmd   = cmd .. conf  -- .. out
+    local buildCmd   = cmd .. conf
     print( buildCmd )
     os.execute( buildCmd ) 
     print()
@@ -143,6 +143,39 @@ function build.compile( project, environment, configuration )
   print()
 end
  
+local function copy_files_with_dir( src_dir, dst_dir, patterns )
+  for _, pattern in pairs( patterns ) do
+    local files = dir.getallfiles( src_dir, pattern )
+    for _, filename in pairs( files ) do
+      local relpath = path.relpath( filename, src_dir )
+      local dstDir = path.join( dst_dir, relpath )
+      dstDir, name = path.splitpath( dstDir )
+      if not path.isdir( dstDir ) then        -- Check if the directory exists.
+        local ret, err = path.mkdir( dstDir ) -- Attempt to make the directory if it doesnt.
+        if not ret then                       -- Check that the directory creation succeeded.
+          print( "Error: " .. err )
+        end
+      end
+      file.copy( filename, dstDir )
+    end
+  end
+end
+
+local function copy_files( src_dir, dst_dir, patterns )
+  for _, pattern in pairs( patterns ) do
+    local files = dir.getallfiles( src_dir, pattern )
+    for _, filename in pairs( files ) do
+      _, name = path.splitpath( filename )
+      if not path.isdir( dst_dir ) then        -- Check if the directory exists.
+        local ret, err = path.mkdir( dst_dir ) -- Attempt to make the directory if it doesnt.
+        if not ret then                        -- Check that the directory creation succeeded.
+          print( "Error: " .. err )
+        end
+      end
+      file.copy( path.abspath( filename ), dst_dir )  -- Copy the file.
+    end
+  end
+end
 
 function build.install( project, installDir, configuration ) 
   if project.system == "cmake"  then
@@ -159,14 +192,15 @@ function build.install( project, installDir, configuration )
     os.execute( buildCmd ) 
     print()
   elseif project.system == "premake5" then
-    -- Premake doesnt support compiling and it definitely doesnt support installing.  Furthermore we probably dont actually want to install unless this isn't the 'toplevel' project which is signified by installDir not being set.
+    -- Premake doesnt support compiling and it definitely doesnt support installing, furthermore we 
+    -- probably dont actually want to install unless this isn't the 'toplevel' project which is signified
+    -- by installDir not being set.
     if installDir then
       -- Headers
-      local headerFiles = dir.getallfiles( project.path .. "/Source", "**.hpp" )
-      for i, filename in pairs(headerFiles) do
-        local relpath = path.relpath( filename, project.path .. "/Source" )
-        file.copy( filename, path.join( installDir, "include", project.name, relpath ) )
-      end
+      copy_files_with_dir( 
+        project.path .. "/Source", 
+        path.join( installDir, "include", project.name ), 
+        { "**.h", "**.hpp" } )
     end
 
     -- Determine the 'root' level for install
@@ -176,34 +210,22 @@ function build.install( project, installDir, configuration )
     end
 
     -- Copy Library files
-    local libraryFiles = dir.getallfiles( "./", "**.lib" )
-    for i, filename in pairs( libraryFiles ) do
-      _, name = path.splitpath( filename )    -- Grab the filename
-      local dst = path.join( p, "Lib", name ) -- determine the destination file.
-      local dstDir, _ = path.splitpath( dst ) -- Split the destination to grab out the directory portion.
-      if not path.isdir( dstDir ) then        -- Check if the directory exists.
-        local ret, err = path.mkdir( dstDir ) -- Attempt to make the directory if it doesnt.
-        if not ret then                       -- Check that the directory creation succeeded.
-          print( "Error: " + err )
-        end
-      end
-      file.copy( path.abspath( filename ), dst )  -- Copy the file.
-    end
+    copy_files( project.path, path.join( p, "lib" ), { "**.lib", "**.pdb" } )
 
-    -- Binaries
-    local binFiles = dir.getallfiles( "./", "**.exe|**.dll" )
-    for i, filename in pairs( binFiles ) do
-      _, name = path.splitpath( filename )
-      local dst = path.join( p, "Bin", name ) -- determine the destination file.
-      local dstDir, _ = path.splitpath( dst ) -- Split the destination to grab out the directory portion.
-      if not path.isdir( dstDir ) then        -- Check if the directory exists.
-        local ret, err = path.mkdir( dstDir ) -- Attempt to make the directory if it doesnt.
-        if not ret then                       -- Check that the directory creation succeeded.
-          print( "Error: " + err )
-        end
-      end
-      file.copy( path.abspath( filename ), dst )  -- Copy the file.
-    end
+    -- Copy Binaries files
+    copy_files( project.path, path.join( p, "bin" ), { "**.exe", "**.dll" } )
+
+  elseif project.system == "none" then   
+    copy_files_with_dir( 
+      project.path, 
+      path.join( installDir, "include" ), 
+      { "**.h", "**.hpp" } )
+
+    -- Copy Library files
+    copy_files( project.path, path.join( installDir, "lib" ), { "**.lib" } )
+
+    -- Copy Binaries files
+    copy_files( project.path, path.join( installDir, "lib" ), { "**.dll" } ) -- Dont copy the exe's?
   end
 end
 
