@@ -1,0 +1,16 @@
+
+# Sprint Nebulae.Build
+
+# User Stories
+
+# Backlog
+  [?] Implement better out-of-source builds and install process.
+  [?] Implement a generic premake5.lua workspace file which is populated using the project.lua file so that the project.lua file is the only file required to be added to the new repo's source.
+  [?] Implement a system such that we can define multiple projects in the "project" file, possibly rename it
+  [?] Embed all the lua scripts into the executable.
+  [?] Allow passing the configuration, toolset and other variables as command line variables.
+  [?] Implement a means to identify a a repository or other source control and force an update prior to building
+  [?] Implement a means to specify new libraries in the project files and globally override entries in the user_libraries list for this invocation
+  [?] Implement a system that adds a define for all included projects for generated project.
+
+# Complete

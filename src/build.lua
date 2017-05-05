@@ -60,7 +60,7 @@ function build.build( project, environment, configuration, installDir )
   -- Compile the project
   build.compile( project, environment, configuration )
 
-  -- Install compiled projects to the correct locations.
+  -- -- Install compiled projects to the correct locations.
   build.install( project, installDir, configuration )
 
   -- return to the original path.
@@ -95,7 +95,7 @@ function build.generate( project, environment, configuration, installDir )
 
     if project.build_defines ~= nil then
       for key, value in pairs( project.build_defines ) do
-        cmd = cmd .. ' -D' .. key .. "=" .. value
+        cmd = cmd .. ' -D' .. value
       end
     end
 
@@ -146,17 +146,19 @@ end
 local function copy_files_with_dir( src_dir, dst_dir, patterns )
   for _, pattern in pairs( patterns ) do
     local files = dir.getallfiles( src_dir, pattern )
-    for _, filename in pairs( files ) do
-      local relpath = path.relpath( filename, src_dir )
-      local dstDir = path.join( dst_dir, relpath )
-      dstDir, name = path.splitpath( dstDir )
-      if not path.isdir( dstDir ) then        -- Check if the directory exists.
-        local ret, err = path.mkdir( dstDir ) -- Attempt to make the directory if it doesnt.
-        if not ret then                       -- Check that the directory creation succeeded.
-          print( "Error: " .. err )
+    if files ~= nil then
+      for _, filename in pairs( files ) do
+        local relpath = path.relpath( filename, src_dir )
+        local dstDir = path.join( dst_dir, relpath )
+        dstDir, name = path.splitpath( dstDir )
+        if not path.isdir( dstDir ) then        -- Check if the directory exists.
+          local ret, err = path.mkdir( dstDir ) -- Attempt to make the directory if it doesnt.
+          if not ret then                       -- Check that the directory creation succeeded.
+            print( "Error: " .. err )
+          end
         end
+        file.copy( filename, dstDir )
       end
-      file.copy( filename, dstDir )
     end
   end
 end
@@ -164,15 +166,18 @@ end
 local function copy_files( src_dir, dst_dir, patterns )
   for _, pattern in pairs( patterns ) do
     local files = dir.getallfiles( src_dir, pattern )
-    for _, filename in pairs( files ) do
-      _, name = path.splitpath( filename )
-      if not path.isdir( dst_dir ) then        -- Check if the directory exists.
-        local ret, err = path.mkdir( dst_dir ) -- Attempt to make the directory if it doesnt.
-        if not ret then                        -- Check that the directory creation succeeded.
-          print( "Error: " .. err )
+    if files ~= nil then 
+      for _, filename in pairs( files ) do
+        _, name = path.splitpath( filename )
+        if not path.isdir( dst_dir ) then        -- Check if the directory exists.
+          local ret, err = path.mkdir( dst_dir ) -- Attempt to make the directory if it doesnt.
+          if not ret then                        -- Check that the directory creation succeeded.
+            print( "Error: " .. err )
+          end
         end
+        -- print( filename )
+        file.copy( filename, dst_dir )  -- Copy the file.
       end
-      file.copy( path.abspath( filename ), dst_dir )  -- Copy the file.
     end
   end
 end
@@ -209,11 +214,14 @@ function build.install( project, installDir, configuration )
       p = installDir 
     end
 
-    -- Copy Library files
-    copy_files( project.path, path.join( p, "lib" ), { "**.lib", "**.pdb" } )
+    projDir = path.join( project.path, "Projects", project.name )
+    if path.isdir( projDir ) then
+      -- Copy Library files
+      copy_files( projDir , path.join( p, "lib" ), { "**.lib", "**.pdb" } )
 
-    -- Copy Binaries files
-    copy_files( project.path, path.join( p, "bin" ), { "**.exe", "**.dll" } )
+      -- Copy Binaries files
+      copy_files( projDir, path.join( p, "bin" ), { "**.exe", "**.dll" } )
+    end
 
   elseif project.system == "none" then   
     copy_files_with_dir( 
@@ -222,7 +230,7 @@ function build.install( project, installDir, configuration )
       { "**.h", "**.hpp" } )
 
     -- Copy Library files
-    copy_files( project.path, path.join( installDir, "lib" ), { "**.lib" } )
+    copy_files( project.path, path.join( installDir, "lib" ), { "**.lib", "**.pdb" } )
 
     -- Copy Binaries files
     copy_files( project.path, path.join( installDir, "lib" ), { "**.dll" } ) -- Dont copy the exe's?

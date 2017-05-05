@@ -51,7 +51,6 @@ workspace "Build"
 
   filter "action:vs*"
     defines{
-      "NOMINMAX",
       "WIN32",
       "_WIN32" 
     }

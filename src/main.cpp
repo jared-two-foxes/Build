@@ -289,7 +289,8 @@ static int collectargs (char **argv, int *pi, int *pv, int *pe) {
         if (argv[i] == NULL) return -1;
       }
       break;
-    default: return -1;  /* invalid option */
+    default: 
+      return i; 
     }
   }
   return 0;
