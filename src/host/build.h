@@ -5,9 +5,12 @@
  */
 
 #define lua_c
+extern "C"
+{
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
+}
 
 #define BUILD_VERSION        "5.0.0-dev"
 #define BUILD_COPYRIGHT      "Copyright (C) 2017 Jared Watt and the Premake Project"
@@ -87,6 +90,65 @@ void do_normalize(lua_State* L, char* buffer, const char* path);
 int do_pathsearch(lua_State* L, const char* filename, const char* path);
 void do_translate(char* value, const char sep);
 
+/* Built-in functions */
+int criteria_compile(lua_State* L);
+int criteria_delete(lua_State* L);
+int criteria_matches(lua_State* L);
+int debug_prompt(lua_State* L);
+int path_getabsolute(lua_State* L);
+int path_getrelative(lua_State* L);
+int path_isabsolute(lua_State* L);
+int path_join(lua_State* L);
+int path_normalize(lua_State* L);
+int path_translate(lua_State* L);
+int path_wildcards(lua_State* L);
+int os_chdir(lua_State* L);
+int os_chmod(lua_State* L);
+int os_copyfile(lua_State* L);
+int os_getcwd(lua_State* L);
+int os_getpass(lua_State* L);
+int os_getWindowsRegistry(lua_State* L);
+int os_getversion(lua_State* L);
+int os_host(lua_State* L);
+int os_is64bit(lua_State* L);
+int os_isdir(lua_State* L);
+int os_isfile(lua_State* L);
+int os_islink(lua_State* L);
+int os_locate(lua_State* L);
+int os_matchdone(lua_State* L);
+int os_matchisfile(lua_State* L);
+int os_matchname(lua_State* L);
+int os_matchnext(lua_State* L);
+int os_matchstart(lua_State* L);
+int os_mkdir(lua_State* L);
+int os_pathsearch(lua_State* L);
+int os_realpath(lua_State* L);
+int os_rmdir(lua_State* L);
+int os_stat(lua_State* L);
+int os_uuid(lua_State* L);
+int os_writefile_ifnotequal(lua_State* L);
+int os_compile(lua_State* L);
+int string_endswith(lua_State* L);
+int string_hash(lua_State* L);
+int string_sha1(lua_State* L);
+int string_startswith(lua_State* L);
+int buffered_new(lua_State* L);
+int buffered_write(lua_State* L);
+int buffered_writeln(lua_State* L);
+int buffered_close(lua_State* L);
+int buffered_tostring(lua_State* L);
+int term_getTextColor(lua_State* L);
+int term_setTextColor(lua_State* L);
+
+#ifdef PREMAKE_CURL
+int http_get(lua_State* L);
+int http_post(lua_State* L);
+int http_download(lua_State* L);
+#endif
+
+#ifdef PREMAKE_COMPRESSION
+int zip_extract(lua_State* L);
+#endif
 
 #ifdef _MSC_VER
  #ifndef snprintf

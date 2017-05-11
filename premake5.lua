@@ -167,7 +167,7 @@ project "Build"
   }
 
   files {
-    "src/main.cpp"
+    "src/**.cpp"
   }
 
   links {
