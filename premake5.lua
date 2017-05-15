@@ -39,7 +39,8 @@ workspace "Build"
   configurations { "debug", "release" }
   language "C"
   location( solutionLocation .. "/Build" )
-  flags { "Symbols", "NoMinimalRebuild", "NoEditAndContinue", "FloatFast" }
+  flags { "NoEditAndContinue", "FloatFast" }
+  defines { "PREMAKE_NO_BUILTIN_SCRIPTS" }
 
   defines {
     "PREMAKE5"
@@ -57,6 +58,7 @@ workspace "Build"
 
     architecture ( "x86_64" )
     buildoptions { "/EHsc", "/MP" }
+    systemversion "10.0.14393.0"
 
     -- ignore some warnings
     linkoptions {
@@ -113,7 +115,7 @@ project "Lua"
 
   filter 'configurations:debug'
     defines { "DEBUG" }
-    flags { "Symbols" }       
+    symbols "On"      
     targetsuffix '_d'
     targetdir ( path.join(baseLocation, "Lib") )
 
@@ -145,7 +147,7 @@ project "lfs"
 
   filter 'configurations:debug'
     defines { "DEBUG" }
-    flags { "Symbols" }       
+    symbols "On"       
     targetdir ( path.join(baseLocation, "Bin") )
 
   filter 'configurations:release'
@@ -167,6 +169,7 @@ project "Build"
   }
 
   files {
+    "src/**.h",
     "src/**.cpp"
   }
 
@@ -177,7 +180,7 @@ project "Build"
 
   filter 'configurations:debug'
     defines { "DEBUG" }
-    flags { "Symbols" }       
+    symbols "On"       
     targetsuffix '_d'
     targetdir ( path.join(baseLocation, "Bin") )
 

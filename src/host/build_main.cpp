@@ -15,10 +15,10 @@ main( int argc, const char** argv )
 	L = luaL_newstate();
 	luaL_openlibs( L );
 
-	//z = premake_init( L );
-	//if (z == OKAY) {
+	z = build_init( L );
+	if (z == OKAY) {
 		z = build_execute( L, argc, argv, "src/root.lua" );
-	//}
+	}
 
 	lua_close( L );
 	return z;
