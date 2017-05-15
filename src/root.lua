@@ -16,8 +16,6 @@ function _build_main()
 
   local app     = require 'pl.app'
   local path    = require 'pl.path'
-  local pretty  = require 'pl.pretty'
-  local tablex  = require 'pl.tablex'
    
   -- app.require_here();
 
@@ -47,12 +45,12 @@ function _build_main()
 
   local configuration = "Release"
   if flags["configuration"] then
-    toolset = flags["configuration"]
+    configuration = flags["configuration"]
   elseif flags["c"] then
-    toolset = flags["c"]
+    configuration = flags["c"]
   end
 
   -- Recursively build all the dependencies for the project (some dependencies may have other dependencies etc, etc)
-  build.build( project, toolset, configuration )
+  --build.build( project, toolset, configuration )
 
 end
