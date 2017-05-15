@@ -51,6 +51,6 @@ function _build_main()
   end
 
   -- Recursively build all the dependencies for the project (some dependencies may have other dependencies etc, etc)
-  --build.build( project, toolset, configuration )
+  build.build( project, toolset, configuration )
 
 end
