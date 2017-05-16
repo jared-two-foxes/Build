@@ -17,7 +17,7 @@ main( int argc, const char** argv )
 
 	z = build_init( L );
 	if (z == OKAY) {
-		z = build_execute( L, argc, argv, "src/root.lua" );
+		z = build_execute( L, argc, argv, "src/_build_main.lua" );
 	}
 
 	lua_close( L );

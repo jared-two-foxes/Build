@@ -170,7 +170,8 @@ project "Build"
 
   files {
     "src/**.h",
-    "src/**.cpp"
+    "src/**.cpp",
+    "src/**.lua"
   }
 
   links {

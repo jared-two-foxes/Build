@@ -1,19 +1,19 @@
 --
--- _premake_main.lua
+-- _build_main.lua
 -- Script-side entry point for the main program logic.
 -- Copyright (c) 2002-2015 Jason Perkins and the Premake project
 --
 
-	local shorthelp     = "Type 'premake5 --help' for help"
-	local versionhelp   = "premake5 (Premake Build Script Generator) %s"
-	local startTime     = os.clock()
+	local shorthelp     = "Type 'build --help' for help"
+	local versionhelp   = "Build (Project Generation and Dependency Management) %s"
+	-- local startTime     = os.clock()
 
 -- set a global.
-	_PREMAKE_STARTTIME = startTime
+	-- _BUILD_STARTTIME = startTime
 
 -- Load the collection of core scripts, required for everything else to work
 
-	local modules = dofile("_modules.lua")
+	-- local modules = dofile("_modules.lua")
 	local manifest = dofile("_manifest.lua")
 	for i = 1, #manifest do
 		dofile(manifest[i])
@@ -22,10 +22,13 @@
 
 -- Create namespaces for myself
 
-	local p = premake
-	p.main = {}
+	local b = build
+	b.main = {}
 
-	local m = p.main
+	local m = b.main
+
+	b.project = {};
+	local p = b.project
 
 
 -- Keep a table of modules that have been preloaded, and their associated
@@ -40,52 +43,52 @@
 -- naming convention.
 ---
 
-	function m.installModuleLoader()
-		table.insert(package.loaders, 2, m.moduleLoader)
-	end
+	-- function m.installModuleLoader()
+	-- 	table.insert(package.loaders, 2, m.moduleLoader)
+	-- end
 
-	function m.moduleLoader(name)
-		local dir = path.getdirectory(name)
-		local base = path.getname(name)
+	-- function m.moduleLoader(name)
+	-- 	local dir = path.getdirectory(name)
+	-- 	local base = path.getname(name)
 
-		if dir ~= "." then
-			dir = dir .. "/" .. base
-		else
-			dir = base
-		end
+	-- 	if dir ~= "." then
+	-- 		dir = dir .. "/" .. base
+	-- 	else
+	-- 		dir = base
+	-- 	end
 
-		local full = dir .. "/" .. base .. ".lua"
+	-- 	local full = dir .. "/" .. base .. ".lua"
 
-		-- list of paths where to look for the module
-		local paths = {
-			".modules/" .. full,
-			"modules/" .. full,
-			full,
-			name .. ".lua"
-		}
+	-- 	-- list of paths where to look for the module
+	-- 	local paths = {
+	-- 		".modules/" .. full,
+	-- 		"modules/" .. full,
+	-- 		full,
+	-- 		name .. ".lua"
+	-- 	}
 
-		-- try to locate the module
-		for _, p in ipairs(paths) do
-			local file = os.locate(p)
-			if file then
-				local chunk, err = loadfile(file)
-				if chunk then
-					return chunk
-				end
-				if err then
-					return "\n\tload error " .. err
-				end
-			end
-		end
+	-- 	-- try to locate the module
+	-- 	for _, p in ipairs(paths) do
+	-- 		local file = os.locate(p)
+	-- 		if file then
+	-- 			local chunk, err = loadfile(file)
+	-- 			if chunk then
+	-- 				return chunk
+	-- 			end
+	-- 			if err then
+	-- 				return "\n\tload error " .. err
+	-- 			end
+	-- 		end
+	-- 	end
 
-		-- didn't find the module in supported paths, try the embedded scripts
-		for _, p in ipairs(paths) do
-			local chunk, err = loadfile("$/" .. p)
-			if chunk then
-				return chunk
-			end
-		end
-	end
+	-- 	-- didn't find the module in supported paths, try the embedded scripts
+	-- 	for _, p in ipairs(paths) do
+	-- 		local chunk, err = loadfile("$/" .. p)
+	-- 		if chunk then
+	-- 			return chunk
+	-- 		end
+	-- 	end
+	-- end
 
 
 ---
@@ -95,8 +98,8 @@
 
 	function m.prepareEnvironment()
 		math.randomseed(os.time())
-		_PREMAKE_DIR = path.getdirectory(_PREMAKE_COMMAND)
-		p.path = p.path .. ";" .. _PREMAKE_DIR .. ";" .. _MAIN_SCRIPT_DIR
+		_BUILD_DIR = path.getdirectory(_BUILD_COMMAND)
+		b.path = b.path .. ";" .. _BUILD_DIR .. ";" .. _MAIN_SCRIPT_DIR
 	end
 
 
@@ -108,21 +111,21 @@
 -- is run immediately.
 ---
 
-	function m.preloadModules()
-		for i = 1, #modules do
-			local name = modules[i]
-			local preloader = name .. "/_preload.lua"
-			preloader = os.locate("modules/" .. preloader) or os.locate(preloader)
-			if preloader then
-				m._preloaded[name] = include(preloader)
-				if not m._preloaded[name] then
-					p.warn("module '%s' should return function from _preload.lua", name)
-				end
-			else
-				require(name)
-			end
-		end
-	end
+	-- function m.preloadModules()
+	-- 	for i = 1, #modules do
+	-- 		local name = modules[i]
+	-- 		local preloader = name .. "/_preload.lua"
+	-- 		preloader = os.locate("modules/" .. preloader) or os.locate(preloader)
+	-- 		if preloader then
+	-- 			m._preloaded[name] = include(preloader)
+	-- 			if not m._preloaded[name] then
+	-- 				b.warn("module '%s' should return function from _preload.lua", name)
+	-- 			end
+	-- 		else
+	-- 			require(name)
+	-- 		end
+	-- 	end
+	-- end
 
 
 ---
@@ -142,7 +145,7 @@
 ---
 
 	function m.locateUserScript()
-		local defaults = { "premake5.lua", "premake4.lua" }
+		local defaults = { "project.lua" }
 		for i = 1, #defaults do
 			if os.isfile(defaults[i]) then
 				_MAIN_SCRIPT = defaults[i]
@@ -167,20 +170,20 @@
 -- Set the action to be performed from the command line arguments.
 ---
 
-	function m.prepareAction()
-		-- The "next-gen" actions have now replaced their deprecated counterparts.
-		-- Provide a warning for a little while before I remove them entirely.
-		if _ACTION and _ACTION:endswith("ng") then
-			p.warnOnce(_ACTION, "'%s' has been deprecated; use '%s' instead", _ACTION, _ACTION:sub(1, -3))
-		end
-		p.action.set(_ACTION)
+	-- function m.prepareAction()
+	-- 	-- The "next-gen" actions have now replaced their deprecated counterparts.
+	-- 	-- Provide a warning for a little while before I remove them entirely.
+	-- 	if _ACTION and _ACTION:endswith("ng") then
+	-- 		b.warnOnce(_ACTION, "'%s' has been deprecated; use '%s' instead", _ACTION, _ACTION:sub(1, -3))
+	-- 	end
+	-- 	b.action.set(_ACTION)
 
-		-- Allow the action to initialize stuff.
-		local action = p.action.current()
-		if action then
-			p.action.initialize(action.trigger)
-		end
-	end
+	-- 	-- Allow the action to initialize stuff.
+	-- 	local action = b.action.current()
+	-- 	if action then
+	-- 		b.action.initialize(action.trigger)
+	-- 	end
+	-- end
 
 
 ---
@@ -190,7 +193,7 @@
 
 	function m.runUserScript()
 		if os.isfile(_MAIN_SCRIPT) then
-			dofile(_MAIN_SCRIPT)
+			p = dofile(_MAIN_SCRIPT)
 		end
 	end
 
@@ -218,36 +221,36 @@
 		end
 
 		if (_OPTIONS["help"]) then
-			p.showhelp()
+			b.showhelp()
 			os.exit(1)
 		end
 
 		-- Validate the command-line arguments. This has to happen after the
 		-- script has run to allow for project-specific options
-		ok, err = p.option.validate(_OPTIONS)
-		if not ok then
-			print("Error: " .. err)
-			os.exit(1)
-		end
+		-- ok, err = b.option.validate(_OPTIONS)
+		-- if not ok then
+		-- 	print("Error: " .. err)
+		-- 	os.exit(1)
+		-- end
 
-		-- If no further action is possible, show a short help message
-		if not _OPTIONS.interactive then
-			if not _ACTION then
-				print(shorthelp)
-				os.exit(1)
-			end
+		-- -- If no further action is possible, show a short help message
+		-- if not _OPTIONS.interactive then
+		-- 	if not _ACTION then
+		-- 		print(shorthelp)
+		-- 		os.exit(1)
+		-- 	end
 
-			local action = p.action.current()
-			if not action then
-				print("Error: no such action '" .. _ACTION .. "'")
-				os.exit(1)
-			end
+		-- 	local action = b.action.current()
+		-- 	if not action then
+		-- 		print("Error: no such action '" .. _ACTION .. "'")
+		-- 		os.exit(1)
+		-- 	end
 
-			if p.action.isConfigurable() and not os.isfile(_MAIN_SCRIPT) then
-				print(string.format("No Premake script (%s) found!", path.getname(_MAIN_SCRIPT)))
-				os.exit(1)
-			end
-		end
+		-- 	if b.action.isConfigurable() and not os.isfile(_MAIN_SCRIPT) then
+		-- 		print(string.format("No Premake script (%s) found!", path.getname(_MAIN_SCRIPT)))
+		-- 		os.exit(1)
+		-- 	end
+		-- end
 	end
 
 
@@ -255,22 +258,22 @@
 -- Override point, for logic that should run before baking.
 ---
 
-	function m.preBake()
-		if p.action.isConfigurable() then
-			print("Building configurations...")
-		end
-	end
+	-- function m.preBake()
+	-- 	if b.action.isConfigurable() then
+	-- 		print("Building configurations...")
+	-- 	end
+	-- end
 
 
 ---
 -- "Bake" the project information, preparing it for use by the action.
 ---
 
-	function m.bake()
-		if p.action.isConfigurable() then
-			p.oven.bake()
-		end
-	end
+	-- function m.bake()
+	-- 	if b.action.isConfigurable() then
+	-- 		b.oven.bake()
+	-- 	end
+	-- end
 
 
 ---
@@ -278,37 +281,37 @@
 -- the configurations are validated.
 ---
 
-	function m.postBake()
-		local function shouldLoad(func)
-			for wks in p.global.eachWorkspace() do
-				for prj in p.workspace.eachproject(wks) do
-					for cfg in p.project.eachconfig(prj) do
-						if func(cfg) then
-							return true
-						end
-					end
-				end
-			end
-		end
+	-- function m.postBake()
+	-- 	local function shouldLoad(func)
+	-- 		for wks in b.global.eachWorkspace() do
+	-- 			for prj in b.workspace.eachproject(wks) do
+	-- 				for cfg in b.project.eachconfig(prj) do
+	-- 					if func(cfg) then
+	-- 						return true
+	-- 					end
+	-- 				end
+	-- 			end
+	-- 		end
+	-- 	end
 
-		-- any modules need to load to support this project?
-		for module, func in pairs(m._preloaded) do
-			if not package.loaded[module] and shouldLoad(func) then
-				require(module)
-			end
-		end
-	end
+	-- 	-- any modules need to load to support this project?
+	-- 	for module, func in pairs(m._preloaded) do
+	-- 		if not package.loaded[module] and shouldLoad(func) then
+	-- 			require(module)
+	-- 		end
+	-- 	end
+	-- end
 
 
 ---
 -- Sanity check the current project setup.
 ---
 
-	function m.validate()
-		if p.action.isConfigurable() then
-			p.container.validate(p.api.rootContainer())
-		end
-	end
+	-- function m.validate()
+	-- 	if b.action.isConfigurable() then
+	-- 		b.container.validate(b.api.rootContainer())
+	-- 	end
+	-- end
 
 
 ---
@@ -316,59 +319,88 @@
 -- before the action takes control.
 ---
 
-	function m.preAction()
-		local action = p.action.current()
-		printf("Running action '%s'...", action.trigger)
-	end
+	-- function m.preAction()
+	-- 	local action = b.action.current()
+	-- 	printf("Running action '%s'...", action.trigger)
+	-- end
 
 
 ---
 -- Hand over control to the action.
 ---
 
-	function m.callAction()
-		local action = p.action.current()
-		p.action.call(action.trigger)
-	end
+	-- function m.callAction()
+	-- 	local action = b.action.current()
+	-- 	b.action.call(action.trigger)
+	-- end
 
 
 ---
 -- Processing is complete.
 ---
 
-	function m.postAction()
-		if p.action.isConfigurable() then
-			local duration = math.floor((os.clock() - startTime) * 1000);
-			printf("Done (%dms).", duration)
+	-- function m.postAction()
+	-- 	if b.action.isConfigurable() then
+	-- 		local duration = math.floor((os.clock() - startTime) * 1000);
+	-- 		printf("Done (%dms).", duration)
+	-- 	end
+	-- end
+
+
+---
+-- Recursively builds all the dependencies for the project and generates the solution file for this project
+-- (some dependencies may have other dependencies etc, etc)
+---
+
+	function m.root()
+
+	  	if not p.path then
+	    	p.path = os.getcwd()
+	  	end
+
+		-- create the 'build' directory and enter it
+		if not os.isdir( "Projects" ) then 
+			os.mkdir( "Projects" )
 		end
+
+		os.chdir( "Projects" )
+
+		local configuration = 'release'
+		if _OPTIONS["configuration"] then
+			configuration = _OPTIONS["configuration"]
+		end
+
+		-- Recursively build all the dependencies for the project (some dependencies may have other dependencies etc, etc)
+		b.oven.build( p, "msvc-14.1", configuration )
 	end
-
-
 
 --
 -- Script-side program entry point.
 --
 
 	m.elements = {
-		m.installModuleLoader,
+		-- m.installModuleLoader,
 		m.locateUserScript,
 		m.prepareEnvironment,
-		m.preloadModules,
-		m.runSystemScript,
-		m.prepareAction,
+		-- m.preloadModules,
+		-- m.runSystemScript,
+		-- m.prepareAction,
 		m.runUserScript,
 		m.checkInteractive,
 		m.processCommandLine,
-		m.preBake,
-		m.bake,
-		m.postBake,
-		m.validate,
-		m.preAction,
-		m.callAction,
-		m.postAction,
+		-- m.preBake,
+		-- m.bake,
+		-- m.postBake,
+		-- m.validate,
+		-- m.preAction,
+		-- m.callAction,
+		-- m.postAction,
+
+
+		m.root, 
 	}
 
-	function _premake_main()
-		p.callArray(m.elements)
+	function _build_main()
+		b.callArray( m.elements )
 		return 0
 	end

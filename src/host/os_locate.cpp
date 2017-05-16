@@ -29,7 +29,7 @@ int os_locate(lua_State* L)
   int nArgs = lua_gettop(L);
 
   /* Fetch premake.path */
-  lua_getglobal(L, "premake");
+  lua_getglobal(L, "build");
   lua_getfield(L, -1, "path");
   path = lua_tostring(L, -1);
 

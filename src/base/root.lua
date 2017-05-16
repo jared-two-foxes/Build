@@ -182,9 +182,9 @@ function parse_args (args,flags_with_values)
                 v = v:sub(2)
             end
             if flags_with_values[v] then
-                -- if i == #args or args[i+1]:find '^-' then
-                --     return utils.raise ("no value for '"..v.."'")
-                -- end
+                if i == #args or args[i+1]:find '^-' then
+                    return raise ("no value for '"..v.."'")
+                end
                 flags[v] = args[i+1]
                 i = i + 1
             else
@@ -222,8 +222,6 @@ end
 
 
 function _build_main()
-
-  local app     = require 'pl.app'
    
   -- Process the arguments into an easy to use format.
   local flags, parameters = parse_args( _ARGV, {toolset=true, configuration=true} )
