@@ -48,11 +48,11 @@ static const luaL_Reg path_functions[] = {
 };
 
 static const luaL_Reg os_functions[] = {
-//  { "chdir",                  os_chdir },
+  { "chdir",                  os_chdir },
 //  { "chmod",                  os_chmod },
 //  { "copyfile",               os_copyfile },
 //  { "_is64bit",               os_is64bit },
-//  { "isdir",                  os_isdir },
+  { "isdir",                  os_isdir },
   { "getcwd",                 os_getcwd },
 //  { "getpass",                os_getpass },
 //  { "getWindowsRegistry",     os_getWindowsRegistry },
@@ -66,7 +66,7 @@ static const luaL_Reg os_functions[] = {
 //  { "matchname",              os_matchname },
 //  { "matchnext",              os_matchnext },
 //  { "matchstart",             os_matchstart },
-//  { "mkdir",                  os_mkdir },
+  { "mkdir",                  os_mkdir },
   { "pathsearch",             os_pathsearch },
 //  { "realpath",               os_realpath },
 //  { "rmdir",                  os_rmdir },
