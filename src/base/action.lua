@@ -10,28 +10,6 @@
 	local action = b.action
 
 
-
---
--- Process the raw command line arguments from _ARGV to populate
--- the _ACTION global and _ARGS table.
---
-
-	_ACTION = nil
-	_ARGS = {}
-
-	for i, arg in ipairs(_ARGV) do
-		if not arg:startswith("/") and not arg:startswith("--") then
-			if not _ACTION then
-				_ACTION = arg
-			else
-				table.insert(_ARGS, arg)
-				_ARGS[arg] = arg
-			end
-		end
-	end
-
-
-
 --
 -- The list of registered actions. Calls to newaction() will add
 -- new entries here.
@@ -81,68 +59,12 @@
 
 	function action.initialize(name)
 		local a = action._list[name]
-		if (a.onInitialize) then
+		if a.onInitialize then
 			a.onInitialize()
 		end
 	end
 
 
-
----
--- Trigger an action.
---
--- @param name
---    The name of the action to be triggered.
----
-
-	function action.call(name)
-		local a = action._list[name]
-
-		if a.onStart then
-			a.onStart()
-		end
-
-		for wks in b.global.eachWorkspace() do
-			local onWorkspace = a.onWorkspace or a.onSolution or a.onsolution
-			if onWorkspace and not wks.external then
-				onWorkspace(wks)
-			end
-
-			for prj in b.workspace.eachproject(wks) do
-				local onProject = a.onProject or a.onproject
-				if onProject and not prj.external then
-					onProject(prj)
-				end
-			end
-		end
-
-		for rule in b.global.eachRule() do
-			local onRule = a.onRule or a.onrule
-			if onRule and not rule.external then
-				onRule(rule)
-			end
-		end
-
-		if a.execute then
-			a.execute()
-		end
-
-		if a.onEnd then
-			a.onEnd()
-		end
-	end
-
-
----
--- Retrieve the current action, as determined by _ACTION.
---
--- @return
---    The current action, or nil if _ACTION is nil or does not match any action.
----
-
-	function action.current()
-		return action.get(_ACTION)
-	end
 
 
 ---
@@ -155,10 +77,6 @@
 ---
 
 	function action.get(name)
-		-- "Next-gen" actions are deprecated
-		if name and name:endswith("ng") then
-			name = name:sub(1, -3)
-		end
 		return action._list[name]
 	end
 
@@ -180,104 +98,4 @@
 			i = i + 1
 			return action._list[keys[i]]
 		end
-	end
-
-
----
--- Determines if an action makes use of the configuration information
--- provided by the project scripts (i.e. it is an exporter) or if it
--- simply performs an action irregardless of configuration, in which
--- case the baking and validation phases can be skipped.
----
-
-	function action.isConfigurable(self)
-		if not self then
-			self = action.current() or {}
-		end
-		if self.onSolution or self.onsolution then
-			return true
-		end
-		if self.onProject or self.onproject then
-			return true
-		end
-		return false
-	end
-
-
-
----
--- Activates a particular action.
---
--- @param name
---    The name of the action to activate.
----
-
-	function action.set(name)
-		_ACTION = name
-
-		-- Some actions imply a particular operating system
-		local act = action.get(name)
-		if act then
-			_TARGET_OS = act.targetos or _TARGET_OS
-		end
-
-		-- Some are implemented in standalone modules
-		if act and act.module then
-			require(act.module)
-		end
-	end
-
-
----
--- Determines if an action supports a particular language or target type.
---
--- @param feature
---    The feature to check, either a programming language or a target type.
--- @returns
---    True if the feature is supported, false otherwise.
----
-
-	function action.supports(feature)
-		if not feature then
-			return true
-		end
-		local self = action.current()
-		if not self then
-			return false
-		end
-
-		if not self.valid_languages and not self.valid_kinds and not self.supports_language then
-			return true
-		end
-
-		if self.valid_languages and table.contains(self.valid_languages, feature) then
-			return true
-		end
-
-		if self.valid_kinds and table.contains(self.valid_kinds, feature) then
-			return true
-		end
-
-		if self.supports_language and self.supports_language(feature) then
-			return true
-		end
-
-
-		return false
-	end
-
-
---
--- Determines if an action supports a particular configuration.
--- @return
--- True if the configuration is supported, false otherwise.
---
-	function b.action.supportsconfig(action, cfg)
-		if not action then
-			return false
-		end
-		if action.supportsconfig then
-			return action.supportsconfig(cfg)
-		end
-		return true
 	end

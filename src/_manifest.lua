@@ -16,7 +16,7 @@
 		"base/path.lua",
 		"base/os.lua",
 		"base/io.lua",
-		-- "base/globals.lua",
+		"base/globals.lua",
 		-- "base/moduledownloader.lua",
 		-- "base/semver.lua",
 		-- "base/http.lua",
@@ -29,7 +29,7 @@
 		"base/action.lua",
 
 		-- -- project script setup
-		-- "base/api.lua",
+		"base/api.lua",
 
 		-- -- project script processing
 		"base/oven.lua",
@@ -47,5 +47,5 @@
 		-- -- Clean action
 		-- "actions/clean/_clean.lua",
 
-		-- "_build_init.lua",
+		"_build_init.lua",
 	}

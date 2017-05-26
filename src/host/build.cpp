@@ -61,11 +61,11 @@ static const luaL_Reg os_functions[] = {
   { "isfile",                 os_isfile },
 //  { "islink",                 os_islink },
   { "locate",                 os_locate },
-//  { "matchdone",              os_matchdone },
-//  { "matchisfile",            os_matchisfile },
-//  { "matchname",              os_matchname },
-//  { "matchnext",              os_matchnext },
-//  { "matchstart",             os_matchstart },
+  { "matchdone",              os_matchdone },
+  { "matchisfile",            os_matchisfile },
+  { "matchname",              os_matchname },
+  { "matchnext",              os_matchnext },
+  { "matchstart",             os_matchstart },
   { "mkdir",                  os_mkdir },
   { "pathsearch",             os_pathsearch },
 //  { "realpath",               os_realpath },
@@ -372,6 +372,13 @@ static void build_path( lua_State* L )
     lua_pushstring( L, ";" );
     lua_pushstring( L, value );
   }
+
+  /* Then in the users home directory */
+  lua_pushstring( L, ";" );
+  value = getenv( "HOME" );
+  if ( !value ) value = getenv( "USERPROFILE" );
+  if ( !value ) value = "~";
+  lua_pushstring( L, value );
 
   /* Then in ~/.premake */
   lua_pushstring( L, ";" );

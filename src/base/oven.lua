@@ -12,6 +12,77 @@
   local oven = b.oven
   
 
+
+---
+-- Set the action to be performed from the command line arguments.
+---
+
+  function oven.prepareAction()
+    print( _ACTION )
+
+    -- The "next-gen" actions have now replaced their deprecated counterparts.
+    -- Provide a warning for a little while before I remove them entirely.
+    if _ACTION and _ACTION:endswith("ng") then
+      b.warnOnce(_ACTION, "'%s' has been deprecated; use '%s' instead", _ACTION, _ACTION:sub(1, -3))
+    end
+    b.action.set(_ACTION)
+
+    -- Allow the action to initialize stuff.
+    local action = b.action.current()
+    if action then
+      b.action.initialize(action.trigger)
+    end
+  end
+
+
+---
+-- Override point, for logic that should run after validation and
+-- before the action takes control.
+---
+
+  function oven.preAction()
+    local action = p.action.current()
+    printf("Running action '%s'...", action.trigger)
+  end
+
+
+---
+-- Trigger an action.
+--
+-- @param name
+--    The name of the action to be triggered.
+---
+
+  function oven.execute( prj, environment, configuration, installDir )
+    local a = b.action.get( prj.system )
+    if a ~= nil then
+      if a.onGenerate then
+          a.onGenerate( prj, environment, configuration, installDir )
+      end
+
+      if a.onCompile then
+        a.onCompile( prj, environment, configuration )
+      end
+
+      if a.onInstall then
+        a.onInstall( prj, installDir, configuration )
+      end
+    end
+  end
+
+
+---
+-- Processing is complete.
+---
+
+  function oven.postAction()
+    if p.action.isConfigurable() then
+      local duration = math.floor((os.clock() - startTime) * 1000);
+      printf("Done (%dms).", duration)
+    end
+  end
+
+
 ---
 -- Recursively builds all the dependencies for the project and generates the solution file for this project
 -- (some dependencies may have other dependencies etc, etc)
@@ -26,13 +97,13 @@
       local_install_dir = installDir
     end
 
-    -- -- Combine the libraries found in the project file and the root projects (override with project option where applicable)
+    -- Combine the libraries found in the project file and the root projects (override with project option where applicable)
     local combined_libraries = {}
-    -- if project.libraries then
-    --   combined_libraries = tablex.union( libraries, project.libraries )
-    -- else
-    --   combined_libraries = libraries
-    -- end
+    if project.libraries then
+      combined_libraries = tablex.union( b.libraries, project.libraries )
+    else
+      combined_libraries = b.libraries
+    end
 
     -- Build the dependency list
     local dependencies = {}
@@ -49,153 +120,42 @@
 
     local p = os.getcwd()
 
-
     -- Create a folder for the project in the 'build' directory and enter it
     if not os.isdir( project.name ) then 
       os.mkdir( project.name )
     end
     os.chdir( project.name )
 
-    -- Build the project solution/workspace
-    oven.generate( project, environment, configuration, installDir )
-
-    -- Compile the project
-    oven.compile( project, environment, configuration )
-
-    -- -- Install compiled projects to the correct locations.
-    oven.install( project, installDir, configuration )
+    print( project.name )
+    oven.execute( project, environment, configuration, installDir )
 
     -- return to the original path.
     os.chdir( p ) 
   end
 
 
-  function oven.generate( project, environment, configuration, installDir )
-    if project.system == 'premake5' then
-      local cmd = "premake5" .. " vs2017 --file=" .. project.path .."/premake5.lua"
-      print( cmd )
-      os.execute( cmd )
-    elseif( project.system == "cmake" ) then
-      -- Only delete the file if we are attempting to do a clean build? 
-      -- Delete any existing build directory to make sure that we have a "clean" build
-      -- if os.isdir( "build" ) then
-      --   ok, err = os.rmdir( rootPath .. "/build" )
-      -- end
 
-      -- Run the solution builder process
-      -- Attempt to build with the specified compilier
-      -- Set the output directory to install the files.
-      local cmd = project.system .. ' -G"Visual Studio 15 2017 Win64"' 
+---
+-- Recursively builds all the dependencies for the project and generates the solution file for this project
+-- (some dependencies may have other dependencies etc, etc)
+---
 
-      if project.naming == "standard " then
-        cmd = cmd .. ' -DCMAKE_DEBUG_POSTFIX="d"'
-      end
+  function oven.bake()
 
-      if installDir then
-        cmd = cmd .. ' -DCMAKE_INSTALL_PREFIX="' .. installDir .. '"';
-      end
+    local project = b.project
 
-      if project.build_defines ~= nil then
-        for key, value in pairs( project.build_defines ) do
-          cmd = cmd .. ' -D' .. value
-        end
-      end
-
-      cmd = cmd .. " " .. project.path
-
-      -- Generate solution
-      print( cmd  )
-      os.execute( cmd )
-      print()
-    elseif ( project.system == "boost.build" ) then
-      local p = path.currentdir()
-      path.chdir( project.path )
-
-      local cmd = "b2 --toolset=" .. environment .. " --variant=" .. configuration .. " address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=" .. installDir .. " -j8 install"
-      os.execute( cmd )
-
-      path.chdir( p )
-    end 
-
-    print()
-  end
-
-  -- "/p:configuration=debug;platform=x64;WarningLevel=0" --v:q"
-
-  -- @todo - Seperate the Preload the CMakeCache file. (Configure step). ??
-  -- @todo - Allow for clean building of dependencies by deleting cached files ??
-  function oven.compile( project, environment, configuration )
-    if project.system == "premake5" or project.system == "cmake" then
-      local cmd  = "devenv " 
-      if project.solution ~= nil then
-        cmd = cmd .. project.solution .. ".sln"
-      else
-        cmd = cmd .. project.name .. ".sln"
-      end
-      local conf = " /Build " .. configuration
-
-      local buildCmd   = cmd .. conf
-      print( buildCmd )
-      os.execute( buildCmd ) 
-      print()
-    elseif ( project.system == "boost.build" ) then
-
+    if not project.path then
+      project.path = os.getcwd()
     end
 
-    print()
-  end
-
-  function oven.install( project, installDir, configuration ) 
-    if project.system == "cmake"  then
-      local cmd  = "devenv " 
-      if project.solution ~= nil then
-        cmd = cmd .. project.solution .. ".sln"
-      else
-        cmd = cmd .. project.name .. ".sln"
-      end
-      local conf = " /Build " .. configuration
-      local project  = " /project INSTALL.vcxproj"
-
-      local buildCmd   = cmd .. conf .. project  
-      os.execute( buildCmd ) 
-      print()
-    elseif project.system == "premake5" then
-      -- Premake doesnt support compiling and it definitely doesnt support installing, furthermore we 
-      -- probably dont actually want to install unless this isn't the 'toplevel' project which is signified
-      -- by installDir not being set.
-      if installDir then
-        -- Headers
-        copy_files_with_dir( 
-          project.path .. "/Source", 
-          path.join( installDir, "include", project.name ), 
-          { "**.h", "**.hpp" } )
-      end
-
-      -- Determine the 'root' level for install
-      local p = project.path
-      if installDir ~= nil then
-        p = installDir 
-      end
-
-      projDir = path.join( project.path, "Projects", project.name )
-      if os.isdir( projDir ) then
-        -- Copy Library files
-        copy_files( projDir , path.join( p, "lib" ), { "**.lib", "**.pdb" } )
-
-        -- Copy Binaries files
-        copy_files( projDir, path.join( p, "bin" ), { "**.exe", "**.dll" } )
-      end
-
-    elseif project.system == "none" then   
-      copy_files_with_dir( 
-        project.path, 
-        path.join( installDir, "include" ), 
-        { "**.h", "**.hpp" } )
-
-      -- Copy Library files
-      copy_files( project.path, path.join( installDir, "lib" ), { "**.lib", "**.pdb" } )
-
-      -- Copy Binaries files
-      copy_files( project.path, path.join( installDir, "lib" ), { "**.dll" } ) -- Dont copy the exe's?
+    -- create the 'build' directory and enter it
+    if not os.isdir( "Projects" ) then 
+      os.mkdir( "Projects" )
     end
+
+    os.chdir( "Projects" )
+    
+    -- Recursively build all the dependencies for the project (some dependencies may have other dependencies etc, etc)
+    oven.build( project, _OPTIONS["toolset"], _OPTIONS["configuration"] )
+
   end
