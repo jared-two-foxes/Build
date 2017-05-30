@@ -1,15 +1,15 @@
 --
--- _premake_main.lua
+-- _build_main.lua
 -- Script-side entry point for the main program logic.
 -- Copyright (c) 2002-2015 Jason Perkins and the Premake project
 --
 
-	local shorthelp     = "Type 'premake5 --help' for help"
-	local versionhelp   = "premake5 (Premake Build Script Generator) %s"
+	local shorthelp     = "Type 'build --help' for help"
+	local versionhelp   = "Build (Project Generation and Dependency Management) %s"
 	local startTime     = os.clock()
 
 -- set a global.
-	_PREMAKE_STARTTIME = startTime
+	_BUILD_STARTTIME = startTime
 
 -- Load the collection of core scripts, required for everything else to work
 
@@ -22,10 +22,13 @@
 
 -- Create namespaces for myself
 
-	local p = premake
-	p.main = {}
+	local b = build
+	b.main = {}
 
-	local m = p.main
+	local m = b.main
+
+	b.project = {};
+	local p = b.project
 
 
 -- Keep a table of modules that have been preloaded, and their associated
@@ -95,8 +98,8 @@
 
 	function m.prepareEnvironment()
 		math.randomseed(os.time())
-		_PREMAKE_DIR = path.getdirectory(_PREMAKE_COMMAND)
-		p.path = p.path .. ";" .. _PREMAKE_DIR .. ";" .. _MAIN_SCRIPT_DIR
+		_BUILD_DIR = path.getdirectory(_BUILD_COMMAND)
+		b.path = b.path .. ";" .. _BUILD_DIR .. ";" .. _MAIN_SCRIPT_DIR
 	end
 
 
@@ -116,7 +119,7 @@
 			if preloader then
 				m._preloaded[name] = include(preloader)
 				if not m._preloaded[name] then
-					p.warn("module '%s' should return function from _preload.lua", name)
+					b.warn("module '%s' should return function from _preload.lua", name)
 				end
 			else
 				require(name)
@@ -131,8 +134,9 @@
 ---
 
 	function m.runSystemScript()
-		dofileopt(_OPTIONS["systemscript"] or { "premake5-system.lua", "premake-system.lua" })
-		filter {}
+		dofileopt(_OPTIONS["systemscript"] or "build-system.lua")
+
+		b.libraries = dofile( "libraries.lua" ) -- this appears to be a similar idea?
 	end
 
 
@@ -142,7 +146,7 @@
 ---
 
 	function m.locateUserScript()
-		local defaults = { "premake5.lua", "premake4.lua" }
+		local defaults = { "project.lua" }
 		for i = 1, #defaults do
 			if os.isfile(defaults[i]) then
 				_MAIN_SCRIPT = defaults[i]
@@ -164,46 +168,16 @@
 
 
 ---
--- Set the action to be performed from the command line arguments.
----
-
-	function m.prepareAction()
-		-- The "next-gen" actions have now replaced their deprecated counterparts.
-		-- Provide a warning for a little while before I remove them entirely.
-		if _ACTION and _ACTION:endswith("ng") then
-			p.warnOnce(_ACTION, "'%s' has been deprecated; use '%s' instead", _ACTION, _ACTION:sub(1, -3))
-		end
-		p.action.set(_ACTION)
-
-		-- Allow the action to initialize stuff.
-		local action = p.action.current()
-		if action then
-			p.action.initialize(action.trigger)
-		end
-	end
-
-
----
 -- If there is a project script available, run it to get the
 -- project information, available options and actions, etc.
 ---
 
 	function m.runUserScript()
 		if os.isfile(_MAIN_SCRIPT) then
-			dofile(_MAIN_SCRIPT)
+			b.project = dofile(_MAIN_SCRIPT)
 		end
 	end
 
-
----
--- Run the interactive prompt, if requested.
----
-
-	function m.checkInteractive()
-		if _OPTIONS.interactive then
-			debug.prompt()
-		end
-	end
 
 
 ---
@@ -218,35 +192,16 @@
 		end
 
 		if (_OPTIONS["help"]) then
-			p.showhelp()
+			b.showhelp()
 			os.exit(1)
 		end
 
 		-- Validate the command-line arguments. This has to happen after the
 		-- script has run to allow for project-specific options
-		ok, err = p.option.validate(_OPTIONS)
+		ok, err = b.option.validate(_OPTIONS)
 		if not ok then
 			print("Error: " .. err)
 			os.exit(1)
-		end
-
-		-- If no further action is possible, show a short help message
-		if not _OPTIONS.interactive then
-			if not _ACTION then
-				print(shorthelp)
-				os.exit(1)
-			end
-
-			local action = p.action.current()
-			if not action then
-				print("Error: no such action '" .. _ACTION .. "'")
-				os.exit(1)
-			end
-
-			if p.action.isConfigurable() and not os.isfile(_MAIN_SCRIPT) then
-				print(string.format("No Premake script (%s) found!", path.getname(_MAIN_SCRIPT)))
-				os.exit(1)
-			end
 		end
 	end
 
@@ -256,8 +211,11 @@
 ---
 
 	function m.preBake()
-		if p.action.isConfigurable() then
-			print("Building configurations...")
+		-- any modules need to load to support this project?
+		for module, func in pairs(m._preloaded) do
+			if not package.loaded[module] then
+				require(module)
+			end
 		end
 	end
 
@@ -267,80 +225,7 @@
 ---
 
 	function m.bake()
-		if p.action.isConfigurable() then
-			p.oven.bake()
-		end
-	end
-
-
----
--- Override point, for logic that should run after baking but before
--- the configurations are validated.
----
-
-	function m.postBake()
-		local function shouldLoad(func)
-			for wks in p.global.eachWorkspace() do
-				for prj in p.workspace.eachproject(wks) do
-					for cfg in p.project.eachconfig(prj) do
-						if func(cfg) then
-							return true
-						end
-					end
-				end
-			end
-		end
-
-		-- any modules need to load to support this project?
-		for module, func in pairs(m._preloaded) do
-			if not package.loaded[module] and shouldLoad(func) then
-				require(module)
-			end
-		end
-	end
-
-
----
--- Sanity check the current project setup.
----
-
-	function m.validate()
-		if p.action.isConfigurable() then
-			p.container.validate(p.api.rootContainer())
-		end
-	end
-
-
----
--- Override point, for logic that should run after validation and
--- before the action takes control.
----
-
-	function m.preAction()
-		local action = p.action.current()
-		printf("Running action '%s'...", action.trigger)
-	end
-
-
----
--- Hand over control to the action.
----
-
-	function m.callAction()
-		local action = p.action.current()
-		p.action.call(action.trigger)
-	end
-
-
----
--- Processing is complete.
----
-
-	function m.postAction()
-		if p.action.isConfigurable() then
-			local duration = math.floor((os.clock() - startTime) * 1000);
-			printf("Done (%dms).", duration)
-		end
+		b.oven.bake()
 	end
 
 
@@ -355,20 +240,13 @@
 		m.prepareEnvironment,
 		m.preloadModules,
 		m.runSystemScript,
-		m.prepareAction,
 		m.runUserScript,
-		m.checkInteractive,
 		m.processCommandLine,
 		m.preBake,
 		m.bake,
-		m.postBake,
-		m.validate,
-		m.preAction,
-		m.callAction,
-		m.postAction,
 	}
 
-	function _premake_main()
-		p.callArray(m.elements)
+	function _build_main()
+		b.callArray( m.elements )
 		return 0
 	end

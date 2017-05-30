@@ -48,128 +48,134 @@ static const luaL_Reg path_functions[] = {
 };
 
 static const luaL_Reg os_functions[] = {
-//  { "chdir",                  os_chdir },
-//  { "chmod",                  os_chmod },
-//  { "copyfile",               os_copyfile },
-//  { "_is64bit",               os_is64bit },
-//  { "isdir",                  os_isdir },
+  { "chdir",                  os_chdir },
+  { "chmod",                  os_chmod },
+  { "copyfile",               os_copyfile },
+  { "isdir",                  os_isdir },
   { "getcwd",                 os_getcwd },
-//  { "getpass",                os_getpass },
 //  { "getWindowsRegistry",     os_getWindowsRegistry },
 //  { "getversion",             os_getversion },
 //  { "host",                   os_host },
   { "isfile",                 os_isfile },
 //  { "islink",                 os_islink },
   { "locate",                 os_locate },
-//  { "matchdone",              os_matchdone },
-//  { "matchisfile",            os_matchisfile },
-//  { "matchname",              os_matchname },
-//  { "matchnext",              os_matchnext },
-//  { "matchstart",             os_matchstart },
-//  { "mkdir",                  os_mkdir },
+  { "matchdone",              os_matchdone },
+  { "matchisfile",            os_matchisfile },
+  { "matchname",              os_matchname },
+  { "matchnext",              os_matchnext },
+  { "matchstart",             os_matchstart },
+  { "mkdir",                  os_mkdir },
   { "pathsearch",             os_pathsearch },
 //  { "realpath",               os_realpath },
-//  { "rmdir",                  os_rmdir },
-//  { "stat",                   os_stat },
+  { "rmdir",                  os_rmdir },
+  { "stat",                   os_stat },
 //  { "uuid",                   os_uuid },
 //  { "writefile_ifnotequal",   os_writefile_ifnotequal },
-//  { "compile",                os_compile },
   { NULL, NULL }
 };
+
+static const luaL_Reg string_functions[] = {
+  { "endswith",  string_endswith },
+  { "hash", string_hash },
+  { "sha1", string_sha1 },
+  { "startswith", string_startswith },
+  { NULL, NULL }
+};
+
 
 
 /**
  * Initialize the Premake Lua environment.
  */
-int build_init(lua_State* L)
+int build_init( lua_State* L )
 {
-	const char* value;
-  
-	luaL_register(L, "debug",    debug_functions);
-	luaL_register(L, "path",     path_functions);
-	luaL_register(L, "os",       os_functions);
-//	luaL_register(L, "string",   string_functions);
+  const char* value;
+
+  luaL_register( L, "debug", debug_functions );
+  luaL_register( L, "path", path_functions );
+  luaL_register( L, "os", os_functions );
+  luaL_register( L, "string", string_functions );
 
 
-	/* push the application metadata */
-	lua_pushstring(L, LUA_COPYRIGHT);
-	lua_setglobal(L, "_COPYRIGHT");
+  /* push the application metadata */
+  lua_pushstring( L, LUA_COPYRIGHT );
+  lua_setglobal( L, "_COPYRIGHT" );
 
-	lua_pushstring(L, BUILD_VERSION);
-	lua_setglobal(L, "_BUILD_VERSION");
+  lua_pushstring( L, BUILD_VERSION );
+  lua_setglobal( L, "_BUILD_VERSION" );
 
-	lua_pushstring(L, BUILD_COPYRIGHT);
-	lua_setglobal(L, "_BUILD_COPYRIGHT");
+  lua_pushstring( L, BUILD_COPYRIGHT );
+  lua_setglobal( L, "_BUILD_COPYRIGHT" );
 
-	lua_pushstring(L, BUILD_PROJECT_URL);
-	lua_setglobal(L, "_BUILD_URL");
+  lua_pushstring( L, BUILD_PROJECT_URL );
+  lua_setglobal( L, "_BUILD_URL" );
 
-	/* set the OS platform variable */
-	lua_pushstring(L, PLATFORM_STRING);
-	lua_setglobal(L, "_TARGET_OS");
+  /* set the OS platform variable */
+  lua_pushstring( L, PLATFORM_STRING );
+  lua_setglobal( L, "_TARGET_OS" );
 
-	/* find the user's home directory */
-	value = getenv("HOME");
-	if (!value) value = getenv("USERPROFILE");
-	if (!value) value = "~";
-	lua_pushstring(L, value);
-	lua_setglobal(L, "_USER_HOME_DIR");
+  /* find the user's home directory */
+  value = getenv( "HOME" );
+  if ( !value ) value = getenv( "USERPROFILE" );
+  if ( !value ) value = "~";
+  lua_pushstring( L, value );
+  lua_setglobal( L, "_USER_HOME_DIR" );
 
-	/* publish the initial working directory */
-	os_getcwd(L);
-	lua_setglobal(L, "_WORKING_DIR");
+  /* publish the initial working directory */
+  os_getcwd( L );
+  lua_setglobal( L, "_WORKING_DIR" );
 
-	/* start the premake namespace */
-	lua_newtable(L);
-	lua_setglobal(L, "build");
+  /* start the premake namespace */
+  lua_newtable( L );
+  lua_setglobal( L, "build" );
 
-	return OKAY;
+  return OKAY;
 }
 
 
 
-int build_execute(lua_State* L, int argc, const char** argv, const char* script)
+int build_execute( lua_State* L, int argc, const char** argv, const char* script )
 {
-	int iErrFunc;
+  int iErrFunc;
 
-	/* push the absolute path to the Premake executable */
-	lua_pushcfunction(L, path_getabsolute);
-	build_locate_executable(L, argv[0]);
-	lua_call(L, 1, 1);
-	lua_setglobal(L, "_BUILD_COMMAND");
+  /* push the absolute path to the Premake executable */
+  lua_pushcfunction( L, path_getabsolute );
+  build_locate_executable( L, argv[ 0 ] );
+  lua_call( L, 1, 1 );
+  lua_setglobal( L, "_BUILD_COMMAND" );
 
-	/* Parse the command line arguments */
-	if ( process_arguments( L, argc, argv ) != OKAY ) {
-		return !OKAY;
-	}
+  /* Parse the command line arguments */
+  if ( process_arguments( L, argc, argv ) != OKAY ) {
+    return !OKAY;
+  }
 
-	/* Use --scripts and PREMAKE_PATH to populate premake.path */
-  build_path(L);
+  /* Use --scripts and PREMAKE_PATH to populate premake.path */
+  build_path( L );
 
-	/* Find and run the main Premake bootstrapping script */
-	if ( run_main( L, script ) != OKAY ) {
-		printf( ERROR_MESSAGE, lua_tostring( L, -1 ) );
-		return !OKAY;
-	}
+  /* Find and run the main Premake bootstrapping script */
+  if ( run_main( L, script ) != OKAY ) {
+    printf( ERROR_MESSAGE, lua_tostring( L, -1 ) );
+    return !OKAY;
+  }
 
-	/* in debug mode, show full traceback on all errors */
+  /* in debug mode, show full traceback on all errors */
 #if defined(NDEBUG)
-	iErrFunc = 0;
+  iErrFunc = 0;
 #else
-	lua_getglobal( L, "debug" );
-	lua_getfield( L, -1, "traceback" );
-	iErrFunc = -2;
+  lua_getglobal( L, "debug" );
+  lua_getfield( L, -1, "traceback" );
+  iErrFunc = -2;
 #endif
 
-	/* and call the main entry point */
-	lua_getglobal( L, "_build_main" );
-	if ( lua_pcall( L, 0, 1, iErrFunc ) != OKAY) {
-		printf( ERROR_MESSAGE, lua_tostring( L, -1 ) );
-		return !OKAY;
-	}
-	else {
-		return (int)lua_tonumber( L, -1 );
-	}
+  /* and call the main entry point */
+  lua_getglobal( L, "_build_main" );
+  if ( lua_pcall( L, 0, 1, iErrFunc ) != OKAY ) {
+    printf( ERROR_MESSAGE, lua_tostring( L, -1 ) );
+    return !OKAY;
+  }
+  else {
+    return ( int ) lua_tonumber( L, -1 );
+  }
 }
 
 
@@ -289,39 +295,39 @@ int build_locate_executable( lua_State* L, const char* argv0 )
  * specified file. If found, returns the discovered path to the script on
  * the top of the Lua stack.
  */
-int build_test_file(lua_State* L, const char* filename, int searchMask)
+int build_test_file( lua_State* L, const char* filename, int searchMask )
 {
-	if ( searchMask & TEST_LOCAL ) {
-		if ( do_isfile( L, filename ) ) {
-			lua_pushcfunction( L, path_getabsolute );
-			lua_pushstring( L, filename );
-			lua_call( L, 1, 1 );
-			return OKAY;
-		}
-	}
+  if ( searchMask & TEST_LOCAL ) {
+    if ( do_isfile( L, filename ) ) {
+      lua_pushcfunction( L, path_getabsolute );
+      lua_pushstring( L, filename );
+      lua_call( L, 1, 1 );
+      return OKAY;
+    }
+  }
 
-	if ( scripts_path && ( searchMask & TEST_SCRIPTS ) ) {
-		if ( do_locate( L, filename, scripts_path ) ) return OKAY;
-	}
+  if ( scripts_path && ( searchMask & TEST_SCRIPTS ) ) {
+    if ( do_locate( L, filename, scripts_path ) ) return OKAY;
+  }
 
-	if ( searchMask & TEST_PATH ) {
-		const char* path = getenv( "BUILD_PATH" );
-		if ( path && do_locate( L, filename, path ) ) return OKAY;
-	}
+  if ( searchMask & TEST_PATH ) {
+    const char* path = getenv( "BUILD_PATH" );
+    if ( path && do_locate( L, filename, path ) ) return OKAY;
+  }
 
-	#if !defined(PREMAKE_NO_BUILTIN_SCRIPTS)
-	if ( ( searchMask & TEST_EMBEDDED ) != 0 ) {
-		/* Try to locate a record matching the filename */
-		if ( build_find_embedded_script( filename ) != NULL ) {
-			lua_pushstring( L, "$/" );
-			lua_pushstring( L, filename );
-			lua_concat( L, 2 );
-			return OKAY;
-		}
-	}
-	#endif
+#if !defined(PREMAKE_NO_BUILTIN_SCRIPTS)
+  if ( ( searchMask & TEST_EMBEDDED ) != 0 ) {
+    /* Try to locate a record matching the filename */
+    if ( build_find_embedded_script( filename ) != NULL ) {
+      lua_pushstring( L, "$/" );
+      lua_pushstring( L, filename );
+      lua_concat( L, 2 );
+      return OKAY;
+    }
+  }
+#endif
 
-	return !OKAY;
+  return !OKAY;
 }
 
 
@@ -363,6 +369,13 @@ static void build_path( lua_State* L )
     lua_pushstring( L, ";" );
     lua_pushstring( L, value );
   }
+
+  /* Then in the users home directory */
+  lua_pushstring( L, ";" );
+  value = getenv( "HOME" );
+  if ( !value ) value = getenv( "USERPROFILE" );
+  if ( !value ) value = "~";
+  lua_pushstring( L, value );
 
   /* Then in ~/.premake */
   lua_pushstring( L, ";" );
@@ -412,29 +425,29 @@ static void build_path( lua_State* L )
  */
 static int process_arguments( lua_State* L, int argc, const char** argv )
 {
-	int i;
+  int i;
 
-	/* Copy all arguments in the _ARGV global */
-	lua_newtable( L );
-	for (i = 1; i < argc; ++i)
-	{
-		lua_pushstring( L, argv[i] );
-		lua_rawseti( L, -2, lua_objlen( L, -2 ) + 1 );
+  /* Copy all arguments in the _ARGV global */
+  lua_newtable( L );
+  for ( i = 1; i < argc; ++i )
+  {
+    lua_pushstring( L, argv[ i ] );
+    lua_rawseti( L, -2, lua_objlen( L, -2 ) + 1 );
 
-		/* The /scripts option gets picked up here; used later to find the
-		 * manifest and scripts later if necessary */
-		if ( strncmp(argv[i], "/scripts=", 9) == 0 )
-		{
-			argv[i] = set_scripts_path( argv[i] + 9 );
-		}
-		else if ( strncmp( argv[i], "--scripts=", 10 ) == 0 )
-		{
-			argv[i] = set_scripts_path( argv[i] + 10 );
-		}
-	}
-	lua_setglobal( L, "_ARGV" );
+    /* The /scripts option gets picked up here; used later to find the
+     * manifest and scripts later if necessary */
+    if ( strncmp( argv[ i ], "/scripts=", 9 ) == 0 )
+    {
+      argv[ i ] = set_scripts_path( argv[ i ] + 9 );
+    }
+    else if ( strncmp( argv[ i ], "--scripts=", 10 ) == 0 )
+    {
+      argv[ i ] = set_scripts_path( argv[ i ] + 10 );
+    }
+  }
+  lua_setglobal( L, "_ARGV" );
 
-	return OKAY;
+  return OKAY;
 }
 
 
@@ -447,29 +460,29 @@ static int process_arguments( lua_State* L, int argc, const char** argv )
  */
 static int run_main( lua_State* L, const char* script )
 {
-	/* Release builds want to load the embedded scripts, with --scripts
-	 * argument allowed as an override. Debug builds will look at the
-	 * local file system first, then fall back to embedded. */
+  /* Release builds want to load the embedded scripts, with --scripts
+   * argument allowed as an override. Debug builds will look at the
+   * local file system first, then fall back to embedded. */
 #if defined(NDEBUG)
-	int z = build_test_file( L, script,
-		TEST_SCRIPTS | TEST_EMBEDDED );
+  int z = build_test_file( L, script,
+    TEST_SCRIPTS | TEST_EMBEDDED );
 #else
-	int z = build_test_file( L, script,
-		TEST_LOCAL | TEST_SCRIPTS | TEST_PATH | TEST_EMBEDDED );
+  int z = build_test_file( L, script,
+    TEST_LOCAL | TEST_SCRIPTS | TEST_PATH | TEST_EMBEDDED );
 #endif
 
-	/* If no embedded script can be found, release builds will then
-	 * try to fall back to the local file system, just in case */
+  /* If no embedded script can be found, release builds will then
+   * try to fall back to the local file system, just in case */
 #if defined(NDEBUG)
-	if (z != OKAY) {
-		z = build_test_file( L, script, TEST_LOCAL | TEST_PATH );
-	}
+  if ( z != OKAY ) {
+    z = build_test_file( L, script, TEST_LOCAL | TEST_PATH );
+  }
 #endif
 
-	if ( z == OKAY ) {
-		z = luaL_dofile( L, lua_tostring( L, -1 ) );
-	}
-	return z;
+  if ( z == OKAY ) {
+    z = luaL_dofile( L, lua_tostring( L, -1 ) );
+  }
+  return z;
 }
 
 
@@ -479,18 +492,18 @@ static int run_main( lua_State* L, const char* script )
  * contents of the file's script.
  */
 
- const buildin_mapping* build_find_embedded_script( const char* filename )
- {
- #if !defined( PREMAKE_NO_BUILTIN_SCRIPTS )
- 	int i;
- 	for ( i = 0; builtin_scripts[i].name != NULL; ++i ) {
- 		if ( strcmp(builtin_scripts[i].name, filename) == 0 ) {
- 			return builtin_scripts + i;
- 		}
- 	}
- #endif
- 	return NULL;
- }
+const buildin_mapping* build_find_embedded_script( const char* filename )
+{
+#if !defined( PREMAKE_NO_BUILTIN_SCRIPTS )
+  int i;
+  for ( i = 0; builtin_scripts[ i ].name != NULL; ++i ) {
+    if ( strcmp( builtin_scripts[ i ].name, filename ) == 0 ) {
+      return builtin_scripts + i;
+    }
+  }
+#endif
+  return NULL;
+}
 
 
 
@@ -501,30 +514,30 @@ static int run_main( lua_State* L, const char* script )
  * from a file.
  */
 
- int build_load_embedded_script( lua_State* L, const char* filename )
- {
- #if !defined( NDEBUG )
- 	static int warned = 0;
- #endif
+int build_load_embedded_script( lua_State* L, const char* filename )
+{
+#if !defined( NDEBUG )
+  static int warned = 0;
+#endif
 
- 	const buildin_mapping* chunk = build_find_embedded_script( filename );
- 	if ( chunk == NULL ) {
- 		return !OKAY;
- 	}
+  const buildin_mapping* chunk = build_find_embedded_script( filename );
+  if ( chunk == NULL ) {
+    return !OKAY;
+  }
 
- 	/* Debug builds probably want to be loading scripts from the disk */
- #if !defined( NDEBUG )
- 	if ( !warned ) {
- 		warned = 1;
- 		printf( "** warning: using embedded script '%s'; use /scripts argument to load from files\n", filename );
- 	}
- #endif
+  /* Debug builds probably want to be loading scripts from the disk */
+#if !defined( NDEBUG )
+  if ( !warned ) {
+    warned = 1;
+    printf( "** warning: using embedded script '%s'; use /scripts argument to load from files\n", filename );
+  }
+#endif
 
- 	/* "Fully qualify" the filename by turning it into the form $/filename */
- 	lua_pushstring( L, "$/" );
- 	lua_pushstring( L, filename );
- 	lua_concat( L, 2 );
+ /* "Fully qualify" the filename by turning it into the form $/filename */
+  lua_pushstring( L, "$/" );
+  lua_pushstring( L, filename );
+  lua_concat( L, 2 );
 
- 	/* Load the chunk */
- 	return luaL_loadbuffer(L, (const char*)chunk->bytecode, chunk->length, filename);
- }
+  /* Load the chunk */
+  return luaL_loadbuffer( L, ( const char* ) chunk->bytecode, chunk->length, filename );
+}

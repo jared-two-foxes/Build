@@ -2,6 +2,48 @@
 --  Nebulae.Build v0.0.1 build script
 --
 
+
+--
+-- Remember my location; I will need it to locate sub-scripts later.
+--
+
+  local corePath = _SCRIPT_DIR
+
+
+--
+-- Register supporting actions and options.
+--
+
+  newaction {
+    trigger = "embed",
+    description = "Embed scripts in scripts.c; required before release builds",
+    execute = function ()
+      include (path.join(corePath, "scripts/embed.lua"))
+    end
+  }
+
+
+  newaction {
+    trigger = "package",
+    description = "Creates source and binary packages",
+    execute = function ()
+      include (path.join(corePath, "scripts/package.lua"))
+    end
+  }
+
+
+  newaction {
+    trigger = "test",
+    description = "Run the automated test suite",
+    execute = function ()
+      test = require "self-test"
+      premake.action.call("self-test")
+    end
+  }
+
+
+
+
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 
 if _ACTION == "vs2010" then
@@ -40,11 +82,6 @@ workspace "Build"
   language "C"
   location( solutionLocation .. "/Build" )
   flags { "NoEditAndContinue", "FloatFast" }
-  defines { "PREMAKE_NO_BUILTIN_SCRIPTS" }
-
-  defines {
-    "PREMAKE5"
-  }
 
   includedirs {
     "./"
@@ -125,36 +162,6 @@ project "Lua"
     targetdir ( path.join(baseLocation, "Lib") )
 
 
------------------------------------------------------------------------------------------------------------------------------------------------------
-
-project "lfs"
-  kind "SharedLib"
-  language "C"
-
-  includedirs {
-    "include",
-    "lua/src",
-  }
-
-  -- Add all the lua library files
-  files {
-    "luafilesystem/src/lfs.c", 
-    "luafilesystem/src/lfs.h",  }
-
-  links {
-    'Lua'
-  }
-
-  filter 'configurations:debug'
-    defines { "DEBUG" }
-    symbols "On"       
-    targetdir ( path.join(baseLocation, "Bin") )
-
-  filter 'configurations:release'
-    defines { "NDEBUG" }
-    flags { "Optimize" }      
-    targetdir ( path.join(baseLocation, "Bin") )
-
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -170,12 +177,12 @@ project "Build"
 
   files {
     "src/**.h",
-    "src/**.cpp"
+    "src/**.cpp",
+    "src/**.lua"
   }
 
   links {
     'Lua',
-    'lfs',
   }
 
   filter 'configurations:debug'
