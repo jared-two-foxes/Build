@@ -44,6 +44,10 @@
 		-- "tools/snc.lua",
 		-- "tools/clang.lua",
 
+		-- raw build action
+		"actions/raw/_raw.lua",
+		"actions/raw/raw.lua",
+
 		-- -- Clean action
 		-- "actions/clean/_clean.lua",
 

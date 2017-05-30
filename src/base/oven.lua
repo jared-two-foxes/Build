@@ -126,7 +126,6 @@
     end
     os.chdir( project.name )
 
-    print( project.name )
     oven.execute( project, environment, configuration, installDir )
 
     -- return to the original path.

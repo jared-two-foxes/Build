@@ -51,10 +51,8 @@ static const luaL_Reg os_functions[] = {
   { "chdir",                  os_chdir },
   { "chmod",                  os_chmod },
   { "copyfile",               os_copyfile },
-//  { "_is64bit",               os_is64bit },
   { "isdir",                  os_isdir },
   { "getcwd",                 os_getcwd },
-//  { "getpass",                os_getpass },
 //  { "getWindowsRegistry",     os_getWindowsRegistry },
 //  { "getversion",             os_getversion },
 //  { "host",                   os_host },
@@ -73,7 +71,6 @@ static const luaL_Reg os_functions[] = {
   { "stat",                   os_stat },
 //  { "uuid",                   os_uuid },
 //  { "writefile_ifnotequal",   os_writefile_ifnotequal },
-//  { "compile",                os_compile },
   { NULL, NULL }
 };
 

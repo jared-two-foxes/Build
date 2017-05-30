@@ -50,12 +50,12 @@ int os_locate(lua_State* L)
     }
 
     ///* embedded in the executable? */
-    //if (premake_find_embedded_script(name)) {
-    //  lua_pushstring(L, "$/");
-    //  lua_pushvalue(L, i);
-    //  lua_concat(L, 2);
-    //  return 1;
-    //}
+    if (build_find_embedded_script(name)) {
+      lua_pushstring(L, "$/");
+      lua_pushvalue(L, i);
+      lua_concat(L, 2);
+      return 1;
+    }
   }
 
   return 0;
