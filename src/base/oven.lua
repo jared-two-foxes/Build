@@ -8,9 +8,7 @@
   local b = build
 
   b.oven = {}
-
-  local oven      = b.oven
-  local startTime = os.clock()
+  local oven = b.oven
 
 
 ---
@@ -42,7 +40,6 @@
 
   function oven.preAction( project )
     printf("Running action '%s'...", project.name)
-    --startTime = os.clock()
   end
 
 
@@ -53,9 +50,11 @@
 --    The name of the action to be triggered.
 ---
 
-  function oven.execute( prj, environment, configuration, installDir )
+  function oven.execute( prj, environment, configuration )
     local a = b.action.get( prj.system )
     if a ~= nil then
+      local installDir = path.join( _MAIN_SCRIPT_DIR, "_external" )
+
       if a.onGenerate then
         a.onGenerate( prj, environment, configuration, installDir )
       end
@@ -76,9 +75,6 @@
 ---
 
   function oven.postAction( project )
-    local duration = math.floor((os.clock() - startTime) * 1000);
-    printf("Done (%dms).", duration)
-    print();
   end
 
 
@@ -91,7 +87,7 @@
 
     local local_install_dir = ''
     if not installDir then
-      local_install_dir = project.path
+      local_install_dir = path.join( project.path, "_build" )
     else
       local_install_dir = installDir
     end
@@ -117,23 +113,31 @@
       end
     end
 
-    local p = os.getcwd()
-
     -- Create a folder for the project in the 'build' directory and enter it
-    if not os.isdir( project.name ) then 
-      os.mkdir( project.name )
+    local cwd = os.getcwd();
+    local compileDir = path.join( _MAIN_SCRIPT_DIR, "_build", project.name )
+    
+    -- If directory doesnt exist make it.
+    if not os.isdir( compileDir ) then
+      local ok, err = os.mkdir( compileDir )
+      if not ok then                          
+        print( "Error: " .. err )
+      end
     end
-    os.chdir( project.name )
+
+    -- Enter directory
+    os.chdir( compileDir ) 
 
     oven.preAction( project )
 
-    oven.execute( project, environment, configuration, local_install_dir )
+    oven.execute( project, environment, configuration, installDir )
 
-    --oven.postAction( project );
+    oven.postAction( project );
 
     -- return to the original path.
-    os.chdir( p ) 
+    os.chdir( cwd ) 
   end
+
 
 
 
@@ -143,23 +147,5 @@
 ---
 
   function oven.bake()
-
-    local project = b.project
-
-    if not project.path then
-      project.path = os.getcwd()
-    end
-
-    -- create the 'build' directory and enter it
-    if not os.isdir( "Projects" ) then 
-      os.mkdir( "Projects" )
-    end
-
-    os.chdir( "Projects" )
-    
-    startTime = os.clock()
-
-    -- Recursively build all the dependencies for the project (some dependencies may have other dependencies etc, etc)
-    oven.build( project, _OPTIONS["toolset"], _OPTIONS["configuration"] )
-
+    oven.build( b.project, _OPTIONS["toolset"], _OPTIONS["configuration"] )
   end

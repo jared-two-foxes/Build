@@ -16,9 +16,9 @@
 ---
 
 	function cmake.generate( prj, environment, configuration, installDir )
-
-  	local cmd = prj.system .. ' -G"Visual Studio 15 2017 Win64"' 
-
+    -- build up the build command
+  	local cmd = "cmake"
+    cmd = cmd .. ' -G"Visual Studio 15 2017 Win64"' 
   	if prj.naming == "standard " then
     	cmd = cmd .. ' -DCMAKE_DEBUG_POSTFIX="d"'
   	end
@@ -34,6 +34,6 @@
 
   	cmd = cmd .. " " .. prj.path .. " >> output_file.txt"
 
-  	-- Generate solution
+  	-- Execute generation script
   	os.execute( cmd )
 	end

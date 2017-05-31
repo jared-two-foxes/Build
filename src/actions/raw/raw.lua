@@ -11,7 +11,7 @@
 
   raw.headers = { "**.h", "**.hpp" }
 
-  raw.library = { "**.lib", "**.pdb" }
+  raw.libraries = { "**.lib", "**.pdb" }
 
   raw.binaries = { "**.exe", "**.dll" }
 
@@ -30,7 +30,7 @@
           local dst_file_dir = path.getdirectory( dst_file )
           if not os.isdir( dst_file_dir ) then       -- Check if the directory exists.
             local ok, err = os.mkdir( dst_file_dir ) -- Attempt to make the directory if it doesnt.
-            if not ok then                                             -- Check that the directory creation succeeded.
+            if not ok then                           -- Check that the directory creation succeeded.
               print( "Error: " .. err )
             end
           end
@@ -50,16 +50,16 @@
 
   function raw.install( sourceDir, installDir, configuration ) 
     -- Headers
-    copyFiles(
+    raw.copyFiles(
       sourceDir, 
       path.join( installDir, "include" ), 
-      headers )
+      raw.headers )
 
     -- Copy Library files
-    copyFiles( sourceDir, path.join( installDir, "lib" ), libraries )
+    raw.copyFiles( sourceDir, path.join( installDir, "lib" ), raw.libraries )
 
     -- Copy Binaries files
-    copyFiles( sourceDir, path.join( installDir, "bin" ), binaries )
+    raw.copyFiles( sourceDir, path.join( installDir, "bin" ), raw.binaries )
   end
 
 

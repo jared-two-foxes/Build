@@ -18,6 +18,9 @@
 ---
 
 	function msvc.compile( project, configuration, prj )
+    local compileDir = path.join( _MAIN_SCRIPT_DIR, "_build", project.name )
+    os.chdir( compileDir )
+    
     local buildCmd = "devenv "
 
     if project.solution ~= nil then

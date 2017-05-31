@@ -20,6 +20,7 @@
 	    os.chdir( prj.path )
 
 	    local cmd = "b2 --toolset=" .. environment .. " --variant=" .. configuration .. " address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=" .. installDir .. " -j8 install"
+	    
 	    os.execute( cmd .. " >> output.txt" )
 
 	    os.chdir( p )

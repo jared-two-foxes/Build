@@ -217,6 +217,14 @@
 				require(module)
 			end
 		end
+
+    	print("Building solution ..." )
+
+	    -- create the 'build' directory and enter it
+	    -- todo - pass in the name of the build directory.
+	    if not os.isdir( "_build" ) then 
+	      os.mkdir( "_build" )
+	    end
 	end
 
 
@@ -225,9 +233,22 @@
 ---
 
 	function m.bake()
+	
+	    -- Grab the project that we are about to attempt to build and set the .
+	    b.project.path = os.getcwd()
+	      
 		b.oven.bake()
 	end
 
+
+---
+-- Processing is complete.
+---
+
+  	function m.postBake()
+		local duration = math.floor((os.clock() - startTime) * 1000);
+		printf("Done (%dms).", duration)
+	end
 
 
 --
@@ -244,6 +265,7 @@
 		m.processCommandLine,
 		m.preBake,
 		m.bake,
+		m.postBase,
 	}
 
 	function _build_main()

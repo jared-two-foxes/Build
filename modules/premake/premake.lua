@@ -16,5 +16,5 @@
 ---
 
 	function premake.generate( project, environment, configuration, installDir )
-  	os.execute( "premake5" .. " vs2017 --file=" .. project.path .."/premake5.lua" )
+  		os.execute( "premake5" .. " vs2017 --file=" .. project.path .."/premake5.lua" )
 	end
