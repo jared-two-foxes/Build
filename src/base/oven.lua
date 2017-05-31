@@ -9,8 +9,8 @@
 
   b.oven = {}
 
-  local oven = b.oven
-  
+  local oven      = b.oven
+  local startTime = os.clock()
 
 
 ---
@@ -40,9 +40,9 @@
 -- before the action takes control.
 ---
 
-  function oven.preAction()
-    local action = p.action.current()
-    printf("Running action '%s'...", action.trigger)
+  function oven.preAction( project )
+    printf("Running action '%s'...", project.name)
+    --startTime = os.clock()
   end
 
 
@@ -57,7 +57,7 @@
     local a = b.action.get( prj.system )
     if a ~= nil then
       if a.onGenerate then
-          a.onGenerate( prj, environment, configuration, installDir )
+        a.onGenerate( prj, environment, configuration, installDir )
       end
 
       if a.onCompile then
@@ -75,11 +75,10 @@
 -- Processing is complete.
 ---
 
-  function oven.postAction()
-    if p.action.isConfigurable() then
-      local duration = math.floor((os.clock() - startTime) * 1000);
-      printf("Done (%dms).", duration)
-    end
+  function oven.postAction( project )
+    local duration = math.floor((os.clock() - startTime) * 1000);
+    printf("Done (%dms).", duration)
+    print();
   end
 
 
@@ -126,7 +125,11 @@
     end
     os.chdir( project.name )
 
-    oven.execute( project, environment, configuration, installDir )
+    oven.preAction( project )
+
+    oven.execute( project, environment, configuration, local_install_dir )
+
+    --oven.postAction( project );
 
     -- return to the original path.
     os.chdir( p ) 
@@ -154,6 +157,8 @@
 
     os.chdir( "Projects" )
     
+    startTime = os.clock()
+
     -- Recursively build all the dependencies for the project (some dependencies may have other dependencies etc, etc)
     oven.build( project, _OPTIONS["toolset"], _OPTIONS["configuration"] )
 

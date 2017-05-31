@@ -48,6 +48,9 @@
 		"actions/raw/_raw.lua",
 		"actions/raw/raw.lua",
 
+
+		"actions/msvc/msvc.lua",
+
 		-- -- Clean action
 		-- "actions/clean/_clean.lua",
 

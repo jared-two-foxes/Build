@@ -9,43 +9,58 @@
 	
 
 
+  raw.headers = { "**.h", "**.hpp" }
+
+  raw.library = { "**.lib", "**.pdb" }
+
+  raw.binaries = { "**.exe", "**.dll" }
+
+
 ---
 --
 ---
 
-  local function copy_files( src_dir, dst_dir, patterns )
+  function raw.copyFiles( src_dir, dst_dir, patterns )
     for _, pattern in pairs( patterns ) do
-      local files_found = os.matchfiles( src_dir .. pattern )
+      local files_found = os.matchfiles( path.join( src_dir, pattern ) )
       if files_found ~= nil then 
         for _, filename in pairs( files_found ) do
-          relative = path.getrelative( src_dir, filename )
-          -- if not path.isdir( dst_dir ) then        -- Check if the directory exists.
-          --   local ret, err = path.mkdir( dst_dir ) -- Attempt to make the directory if it doesnt.
-          --   if not ret then                        -- Check that the directory creation succeeded.
-          --     print( "Error: " .. err )
-          --   end
-          -- end
-          os.copy( filename, dst_dir .. relative )  -- Copy the file.
+          local relative = path.getrelative( src_dir, filename )
+          local dst_file = path.join( dst_dir, relative )
+          local dst_file_dir = path.getdirectory( dst_file )
+          if not os.isdir( dst_file_dir ) then       -- Check if the directory exists.
+            local ok, err = os.mkdir( dst_file_dir ) -- Attempt to make the directory if it doesnt.
+            if not ok then                                             -- Check that the directory creation succeeded.
+              print( "Error: " .. err )
+            end
+          end
+          local ok, err = os.copyfile( filename, dst_file ) -- Copy the file.
+          if not ok then
+            print( err )
+          end
         end
       end
     end
   end
 
 
-
 ---
--- Attempts to run cmake with the specified options as described by the project object
+--
 ---
 
-	function raw.install( project, installDir, configuration )
-      copy_files( 
-        project.path, 
-        path.join( installDir, "include" ), 
-        { "**.h", "**.hpp" } )
+  function raw.install( sourceDir, installDir, configuration ) 
+    -- Headers
+    copyFiles(
+      sourceDir, 
+      path.join( installDir, "include" ), 
+      headers )
 
-      -- Copy Library files
-      copy_files( project.path, path.join( installDir, "lib" ), { "**.lib", "**.pdb" } )
+    -- Copy Library files
+    copyFiles( sourceDir, path.join( installDir, "lib" ), libraries )
 
-      -- Copy Binaries files
-      copy_files( project.path, path.join( installDir, "lib" ), { "**.dll" } ) -- Dont copy the exe's?
-	end
+    -- Copy Binaries files
+    copyFiles( sourceDir, path.join( installDir, "bin" ), binaries )
+  end
+
+
+

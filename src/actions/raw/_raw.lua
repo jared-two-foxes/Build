@@ -17,7 +17,7 @@
 		description     = "",
 
 		onInstall = function( project, installDir, configuration )
-			b.raw.install( project, environment, configuration )
+			b.raw.install( project.path, installDir, configuration )
 		end,
 
 	}

@@ -25,11 +25,11 @@
 		end,
 
 		onCompile = function( project, environment, configuration )
-			b.modules.cmake.compile( project, environment, configuration )
+			b.msvc.compile( project, configuration )
 		end,
 
 		onInstall = function( project, installDir, configuration )
-			b.modules.cmake.install( project, environment, configuration )
+			b.msvc.compile( project, configuration, "INSTALL.vcxproj" )
 		end,
 	}
 
@@ -41,3 +41,4 @@
 	return function(cfg)
 		return (_ACTION == "cmake")
 	end
+   
