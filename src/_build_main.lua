@@ -27,8 +27,8 @@
 
 	local m = b.main
 
-	b.project = {};
-	local p = b.project
+	b.workspace = {};
+	local p = b.workspace
 
 
 -- Keep a table of modules that have been preloaded, and their associated
@@ -146,7 +146,7 @@
 ---
 
 	function m.locateUserScript()
-		local defaults = { "project.lua" }
+		local defaults = { "workspace.lua" }
 		for i = 1, #defaults do
 			if os.isfile(defaults[i]) then
 				_MAIN_SCRIPT = defaults[i]
@@ -174,7 +174,7 @@
 
 	function m.runUserScript()
 		if os.isfile(_MAIN_SCRIPT) then
-			b.project = dofile(_MAIN_SCRIPT)
+			b.workspace = dofile(_MAIN_SCRIPT)
 		end
 	end
 
@@ -235,7 +235,7 @@
 	function m.bake()
 	
 	    -- Grab the project that we are about to attempt to build and set the .
-	    b.project.path = os.getcwd()
+	    b.workspace.path = os.getcwd()
 	      
 		b.oven.bake()
 	end

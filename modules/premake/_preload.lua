@@ -20,34 +20,34 @@
 		-- Workspace and project generation logic
 
 
-		onGenerate = function( project, environment, configuration, installDir  )
-			b.modules.premake.generate( project, environment, configuration, installDir )
+		onGenerate = function( wksp, toolset, installDir  )
+			b.modules.premake.generate( wksp, toolset, installDir )
 		end,
 
-		onCompile = function( project, environment, configuration )
-			b.msvc.compile( project, configuration )
+		onCompile = function( wksp, toolset, configuration )
+			b.msvc.compile( wksp, configuration )
 		end,
 
-		onInstall = function( project, installDir, configuration )
+		onInstall = function( wksp, installDir, configuration )
 			if installDir ~= nil then
 				b.raw.copyFiles( 
-					path.join( project.path, "Source" ), 
-					path.join( installDir, "install", project.name ),
+					path.join( wksp.path, "Source" ), 
+					path.join( installDir, "install", wksp.name ),
 					b.raw.headers )
 			end
 
-			local p = project.name
+			local p = wksp.name
 			if installDir ~= nil then
 				p = installDir 
 			end
 
 			b.raw.copyFiles( 
-				path.join( project.path, "Projects", project.name ), 
+				path.join( wksp.path, "_external", wksp.name ), 
 				path.join( p, "lib" ), 
 				b.raw.libraries )
 
 			b.raw.copyFiles( 
-				path.join( project.path, "Projects", project.name ), 
+				path.join( wksp.path, "_external", wksp.name ), 
 				path.join( p, "bin" ), 
 				b.raw.binaries )
 		end,

@@ -10,30 +10,37 @@
 
 	local cmake = b.modules.cmake
 	
+  -- todo; Assumes all builds are 64 bit..?
+  cmake.toolsetNames = {
+    vs2017 = "Visual Studio 15 2017 Win64",
+    vs2015 = "Visual Studio 14 2015 Win64"
+  }
 
 ---
 -- Attempts to run cmake with the specified options as described by the project object
 ---
 
-	function cmake.generate( prj, environment, configuration, installDir )
+	function cmake.generate( wksp, toolset, installDir )
     -- build up the build command
   	local cmd = "cmake"
-    cmd = cmd .. ' -G"Visual Studio 15 2017 Win64"' 
-  	if prj.naming == "standard " then
+
+    cmd = cmd .. ' -G"' .. cmake.toolsetNames[ toolset ] .. '"' 
+  	if wksp.naming == "standard " then
     	cmd = cmd .. ' -DCMAKE_DEBUG_POSTFIX="d"'
   	end
 
     cmd = cmd .. ' -DCMAKE_INSTALL_PREFIX="' .. installDir .. '"';
+    
     cmd = cmd .. ' -DCMAKE_INSTALL_MESSAGE="LAZY"'
 
-  	if prj.build_defines ~= nil then
-    	for key, value in pairs( prj.build_defines ) do
+  	if wksp.build_defines ~= nil then
+    	for key, value in pairs( wksp.build_defines ) do
       		cmd = cmd .. ' -D' .. value
     	end
   	end
 
-  	cmd = cmd .. " " .. prj.path .. " >> output_file.txt"
+  	cmd = cmd .. " " .. wksp.path
 
   	-- Execute generation script
-  	os.execute( cmd )
+  	os.execute( cmd  .. " >> generate.log" )
 	end

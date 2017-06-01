@@ -20,11 +20,10 @@
 		trigger     = "toolset",
 		value       = "VALUE",
 		description = "Choose a toolset",
-		default     = "msvc-14.1"
+		default     = "vs2017"
 		-- allowed = {
-		-- 	{ "msvc-14.1",   "Microsoft .NET (csc)" },
-		-- 	{ "premake", "Novell Mono (mcs)"    },
-		-- 	{ "boost",   "Portable.NET (cscc)"  },
+		-- 	{ "vs2017", "Microsoft .NET (csc)" },
+		-- 	{ "vs2015", "Novell Mono (mcs)"    },
 		-- }
 	}
 
@@ -35,8 +34,8 @@
 		description = "Choose a configuration to install",
 		default     = "release"
 		-- allowed = {
-		-- 	{ "msvc-14.1",   "Microsoft .NET (csc)" },
-		-- 	{ "premake", "Novell Mono (mcs)"    },
+		-- 	{ "debug",   "Microsoft .NET (csc)" },
+		-- 	{ "release", "Novell Mono (mcs)"    },
 		-- }
 	}
 

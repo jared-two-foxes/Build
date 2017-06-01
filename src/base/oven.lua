@@ -38,8 +38,22 @@
 -- before the action takes control.
 ---
 
-  function oven.preAction( project )
-    printf("Running action '%s'...", project.name)
+  function oven.preAction( wksp )
+    printf("Generating project '%s'...", wksp.name)
+
+    -- Create a folder for the project in the 'build' directory and enter it
+    local compileDir = path.join( _MAIN_SCRIPT_DIR, "_build", wksp.name )
+    
+    -- If directory doesnt exist make it.
+    if not os.isdir( compileDir ) then
+      local ok, err = os.mkdir( compileDir )
+      if not ok then                          
+        print( "Error: " .. err )
+      end
+    end
+
+    -- Enter the build directory
+    os.chdir( compileDir )
   end
 
 
@@ -50,31 +64,40 @@
 --    The name of the action to be triggered.
 ---
 
-  function oven.execute( prj, environment, configuration )
-    local a = b.action.get( prj.system )
-    if a ~= nil then
-      local installDir = path.join( _MAIN_SCRIPT_DIR, "_external" )
+  function oven.execute( wksp, toolset, config )
+    if wksp.system then
+      local a = b.action.get( wksp.system )
+    
+      if a ~= nil then
+        local installDir = path.join( _MAIN_SCRIPT_DIR, "_external" )
 
-      if a.onGenerate then
-        a.onGenerate( prj, environment, configuration, installDir )
-      end
+        if a.onGenerate then
+          a.onGenerate( wksp, toolset, installDir )
+        end
 
-      if a.onCompile then
-        a.onCompile( prj, environment, configuration )
-      end
+        if a.onCompile then
+          a.onCompile( wksp, toolset, config )
+        end
 
-      if a.onInstall then
-        a.onInstall( prj, installDir, configuration )
+        if a.onInstall then
+          a.onInstall( wksp, installDir, config )
+        end
+      else
+        print( "err: Unable to find generator '" .. wksp.system "'" )
       end
+    else
+      print( "No 'system', skipping" )
     end
   end
 
 
 ---
--- Processing is complete.
+-- Processing is complete, rest the build state.
 ---
 
-  function oven.postAction( project )
+  function oven.postAction()
+    -- return to the root build directory
+    os.chdir( path.join( _MAIN_SCRIPT_DIR, "_build" ) )
   end
 
 
@@ -83,59 +106,37 @@
 -- (some dependencies may have other dependencies etc, etc)
 ---
 
-  function oven.build( project, environment, configuration, installDir )
+  function oven.build( workspace, toolset, config )
 
-    local local_install_dir = ''
-    if not installDir then
-      local_install_dir = path.join( project.path, "_build" )
-    else
-      local_install_dir = installDir
-    end
-
-    -- Combine the libraries found in the project file and the root projects (override with project option where applicable)
-    local combined_libraries = {}
-    if project.libraries then
-      combined_libraries = tablex.union( b.libraries, project.libraries )
-    else
-      combined_libraries = b.libraries
-    end
-
-    -- Build the dependency list
+    -- Build up the dependencies required by this project.
     local dependencies = {}
-    if project.dependencies then
-      for i, name in pairs(project.dependencies ) do
-        dependencies[name] = combined_libraries[name]
-      end
-      
-      -- Recurse the build call on each dependency.
-      for key, prj in pairs(dependencies) do
-        oven.build( prj, environment, configuration, local_install_dir )
+    if workspace.dependencies then
+      for _, name in pairs(workspace.dependencies) do
+        dependencies[name] = b.libraries[name]
       end
     end
 
-    -- Create a folder for the project in the 'build' directory and enter it
-    local cwd = os.getcwd();
-    local compileDir = path.join( _MAIN_SCRIPT_DIR, "_build", project.name )
-    
-    -- If directory doesnt exist make it.
-    if not os.isdir( compileDir ) then
-      local ok, err = os.mkdir( compileDir )
-      if not ok then                          
-        print( "Error: " .. err )
+    if workspace.libraries then
+      for _, project in pairs(workspace.libraries) do
+        if project.dependencies then
+          for _, name in pairs(project.dependencies) do
+            dependencies[name] = b.libraries[name]
+          end
+        end
       end
     end
 
-    -- Enter directory
-    os.chdir( compileDir ) 
+    -- Recurse the build call on each dependency.
+    if dependencies then  
+      for _, library in pairs(dependencies) do
+        oven.build( library, toolset, config )
+      end
+    end
 
-    oven.preAction( project )
-
-    oven.execute( project, environment, configuration, installDir )
-
-    oven.postAction( project );
-
-    -- return to the original path.
-    os.chdir( cwd ) 
+    -- Generate, build and install this workspace.
+    oven.preAction( workspace )
+    oven.execute( workspace, toolset, config )
+    oven.postAction( workspace );
   end
 
 
@@ -147,5 +148,5 @@
 ---
 
   function oven.bake()
-    oven.build( b.project, _OPTIONS["toolset"], _OPTIONS["configuration"] )
+    oven.build( b.workspace, _OPTIONS["toolset"], _OPTIONS["configuration"] )
   end

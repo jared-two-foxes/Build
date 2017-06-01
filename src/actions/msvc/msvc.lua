@@ -17,26 +17,21 @@
 -- 
 ---
 
-	function msvc.compile( project, configuration, prj )
-    local compileDir = path.join( _MAIN_SCRIPT_DIR, "_build", project.name )
-    os.chdir( compileDir )
+	function msvc.compile( wksp, config, prj )
     
     local buildCmd = "devenv "
 
-    if project.solution ~= nil then
-      buildCmd = buildCmd .. project.solution .. ".sln"
+    if wksp.solution ~= nil then
+      buildCmd = buildCmd .. wksp.solution .. ".sln"
     else
-      buildCmd = buildCmd .. project.name .. ".sln"
+      buildCmd = buildCmd .. wksp.name .. ".sln"
     end
 
-    buildCmd = buildCmd .." /Build " .. configuration 
+    buildCmd = buildCmd .." /Build " .. config 
     
     if prj then
       buildCmd = buildCmd .. " /project " .. prj
     end
 
-    -- Pipe to an output file.
-    buildCmd = buildCmd .. " >> msvc_file.txt"
-
-    os.execute( buildCmd )  
+    os.execute( buildCmd .. " >> msvc_output.txt" )  
 	end

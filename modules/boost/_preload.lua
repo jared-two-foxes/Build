@@ -17,8 +17,8 @@
 		description = "Generate's Boost.Build based project files",
 
 
-		onGenerate = function( project, environment, configuration, installDir  )
-			b.modules.boost.generate( project, environment, configuration, installDir )
+		onGenerate = function( wksp, toolset, installDir  )
+			b.modules.boost.generate( wksp, toolset, installDir )
 		end,
 
 	}

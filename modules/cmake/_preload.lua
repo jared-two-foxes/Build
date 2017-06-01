@@ -20,16 +20,20 @@
 		-- Workspace and project generation logic
 
 
-		onGenerate = function( project, environment, configuration, installDir  )
-			b.modules.cmake.generate( project, environment, configuration, installDir )
+		onGenerate = function( project, toolset, installDir  )
+			b.modules.cmake.generate( project, toolset, installDir )
 		end,
 
-		onCompile = function( project, environment, configuration )
-			b.msvc.compile( project, configuration )
+		onCompile = function( project, toolset, config )
+			b.msvc.compile( project, config )
 		end,
 
-		onInstall = function( project, installDir, configuration )
-			b.msvc.compile( project, configuration, "INSTALL.vcxproj" )
+		onInstall = function( project, installDir, config )
+			-- todo;
+			--		this is actually a little broken as INSTALL.vcxproj is going to
+			-- 		install the files into the location defined during the generation 
+			--		step.
+			b.msvc.compile( project, config, "INSTALL.vcxproj" )
 		end,
 	}
 

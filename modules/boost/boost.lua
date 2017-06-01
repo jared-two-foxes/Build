@@ -10,18 +10,30 @@
 
 	local boost = b.modules.boost
 	
+	boost.toolsetNames = {
+		vs2017 = "msvc-14.1",
+		vs2015 = "msvc-14.0"
+	}
 
 ---
 -- Attempts to run cmake with the specified options as described by the project object
 ---
 
-	function boost.generate( prj, environment, configuration, installDir )
+	function boost.generate( wksp, toolset, installDir )
 	    local p = os.getcwd()
-	    os.chdir( prj.path )
+	    os.chdir( wksp.path )
 
-	    local cmd = "b2 --toolset=" .. environment .. " --variant=" .. configuration .. " address-model=64 --architecture=ia64 --threading=multi --link=static --prefix=" .. installDir .. " -j8 install"
+	    local cmd = "b2 "
+	    cmd = cmd .. "toolset=" .. boost.toolsetNames[ toolset ]
+	    cmd = cmd .. " --variant=debug"
+	    cmd = cmd .. " address-model=64"
+	    cmd = cmd .. " --architecture=ia64"
+	    cmd = cmd .. " --threading=multi" 
+	    cmd = cmd .. " --link=static"
+	    cmd = cmd .. " --prefix=" .. installDir
+	    cmd = cmd .. " -j8 install"
 	    
-	    os.execute( cmd .. " >> output.txt" )
+	    os.execute( cmd .. " >> generate.log" )
 
 	    os.chdir( p )
 	end
