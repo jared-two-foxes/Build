@@ -18,7 +18,10 @@
 	function premake.generate( wksp, toolset, configuration )
 		local buildCmd = "premake5" 
 		buildCmd = buildCmd .. " --file=" .. wksp.path .."/premake5.lua"
+		buildCmd = buildCmd .. " --outdir=" .. os.getcwd()
 		buildCmd = buildCmd .. " " .. toolset 
-		
+
+		print( os.getcwd() )
+		print( buildCmd )
   		os.execute( buildCmd .. ">> generate.log " )
 	end

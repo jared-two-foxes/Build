@@ -32,7 +32,7 @@
 			if installDir ~= nil then
 				b.raw.copyFiles( 
 					path.join( wksp.path, "Source" ), 
-					path.join( installDir, "install", wksp.name ),
+					path.join( installDir, "include", wksp.name ),
 					b.raw.headers )
 			end
 
@@ -42,12 +42,12 @@
 			end
 
 			b.raw.copyFiles( 
-				path.join( wksp.path, "_external", wksp.name ), 
+				path.join( _BUILD_DIR, "_build", wksp.name ), 
 				path.join( p, "lib" ), 
 				b.raw.libraries )
 
 			b.raw.copyFiles( 
-				path.join( wksp.path, "_external", wksp.name ), 
+				path.join( _BUILD_DIR, "_build", wksp.name ), 
 				path.join( p, "bin" ), 
 				b.raw.binaries )
 		end,

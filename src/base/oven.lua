@@ -102,6 +102,40 @@
 
 
 ---
+--  Extract library definition
+---
+  local function extractLibrary( name )
+    -- Check name for sub components.
+    local prj_name
+    local parts = string.explode( name, ":" )
+    if table.getn( parts ) then
+      prj_name = parts[2]
+    end
+
+    --todo; Handle the case where name doesn't exist.
+
+    local l = b.libraries[ parts[1] ] -- because lua is 1 based.
+    if l ~= nil then
+      if l.system == "premake5" then
+        -- This entry simply points to a workspace file go grab that and merge it with this entry.
+        local wksp = require( path.join( l.path, "workspace" ) )
+        l = table.merge( l, wksp )
+      end
+      
+      -- Attempt to find a library with the lib name if its specified.
+      if prj_name ~= nil then
+        --l = l.libraries[prj_name];
+        --@todo; Maybe setup the wksp to add in a library entry?
+      end
+    else
+      --todo; attempt to find the library in the workspace?
+    end
+
+    return l
+  end
+
+
+---
 -- Recursively builds all the dependencies for the project and generates the solution file for this project
 -- (some dependencies may have other dependencies etc, etc)
 ---
@@ -112,7 +146,7 @@
     local dependencies = {}
     if workspace.dependencies then
       for _, name in pairs(workspace.dependencies) do
-        dependencies[name] = b.libraries[name]
+        dependencies[name] = extractLibrary(name)
       end
     end
 
@@ -120,7 +154,17 @@
       for _, project in pairs(workspace.libraries) do
         if project.dependencies then
           for _, name in pairs(project.dependencies) do
-            dependencies[name] = b.libraries[name]
+            dependencies[name] = extractLibrary(name)
+          end
+        end
+      end
+    end
+
+    if workspace.binaries then
+      for _, project in pairs(workspace.binaries) do
+        if project.dependencies then
+          for _, name in pairs(project.dependencies) do
+            dependencies[name] = extractLibrary(name)
           end
         end
       end
