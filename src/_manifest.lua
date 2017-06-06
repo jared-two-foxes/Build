@@ -17,27 +17,26 @@
 		"base/os.lua",
 		"base/io.lua",
 		"base/globals.lua",
-		-- "base/moduledownloader.lua",
-		-- "base/semver.lua",
-		-- "base/http.lua",
 		-- "base/json.lua",
 		-- "base/jsonwrapper.lua",
 		-- "base/languages.lua",
 
-		-- -- runtime switches
+		-- runtime switches
+		"base/generator.lua",
 		"base/option.lua",
 		"base/action.lua",
 
-		-- -- project script setup
+		-- project script setup
 		"base/api.lua",
 
-		-- -- project script processing
+		-- project script processing
 		"base/oven.lua",
 		-- "base/validation.lua",
 		-- "base/premake.lua",
 		-- "base/help.lua",
 
-		-- -- tool APIs
+		-- tool APIs
+		"actions/msvc/msvc.lua",
 		-- "tools/dotnet.lua",
 		-- "tools/gcc.lua",
 		-- "tools/msc.lua",
@@ -45,13 +44,13 @@
 		-- "tools/clang.lua",
 
 		-- raw build action
-		"actions/raw/_raw.lua",
-		"actions/raw/raw.lua",
+		"generators/raw.lua",
+		"generators/boost.lua",
+		"generators/cmake.lua",
+		"generators/premake.lua",
 
 
-		"actions/msvc/msvc.lua",
-
-		-- -- Clean action
+		-- Clean action
 		-- "actions/clean/_clean.lua",
 
 		"_build_init.lua",

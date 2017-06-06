@@ -5,7 +5,4 @@
 --
 
 	return {
-		"premake",
-		"cmake",
-		"boost",
 	}

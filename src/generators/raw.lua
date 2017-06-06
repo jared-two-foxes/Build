@@ -5,14 +5,20 @@
 --
 
 	local b = build
-	local raw = b.raw
-	
 
+  b.raw = {}
+  
+	local raw = b.raw
+	raw.trigger = "raw"
+  raw.description = "Fallback generator for frameworks that do not require any form of solution generation"
+
+
+---
+--
+---
 
   raw.headers = { "**.h", "**.hpp" }
-
   raw.libraries = { "**.lib", "**.pdb" }
-
   raw.binaries = { "**.exe", "**.dll" }
 
 
@@ -71,23 +77,30 @@
       end
     end
   end
+
+
 ---
 --
 ---
 
-  function raw.install( sourceDir, installDir, configuration ) 
+  function raw.install( wksp, installDir, configuration ) 
     -- Headers
     raw.copyFilesWithDirectory(
-      sourceDir, 
+      wksp.path, 
       path.join( installDir, "include" ), 
       raw.headers )
 
     -- Copy Library files
-    raw.copyFiles( sourceDir, path.join( installDir, "lib" ), raw.libraries )
+    raw.copyFiles( wksp.path, path.join( installDir, "lib" ), raw.libraries )
 
     -- Copy Binaries files
-    raw.copyFiles( sourceDir, path.join( installDir, "bin" ), raw.binaries )
+    raw.copyFiles( wksp.path, path.join( installDir, "bin" ), raw.binaries )
   end
 
 
 
+---
+-- 
+---
+  
+  newgenerator( raw )

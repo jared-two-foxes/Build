@@ -1,22 +1,30 @@
 --
--- xcode_common.lua
--- Functions to generate the different sections of an Xcode project.
--- Copyright (c) 2009-2015 Jason Perkins and the Premake project
+-- boost.lua
+-- Functions to generate a solution file via use of the Boost.Build build system.
+-- Copyright (c) 2016-2017 Jared Watt and the Build project
 --
 
 	local b = build
 
-	b.modules.boost = {}
+	b.boost = {}
 
-	local boost = b.modules.boost
-	
+	local boost = b.boost
+	boost.trigger = "boost"
+	boost.description = "Generates workspace files using Boost.Build"
+
+
+---
+--  Create a mapping from "Build" toolset names to "Boost.Build" toolset names.
+---
+
 	boost.toolsetNames = {
 		vs2017 = "msvc-14.1",
 		vs2015 = "msvc-14.0"
 	}
 
+
 ---
--- Attempts to run cmake with the specified options as described by the project object
+--  Attempts to run Boost.Build using options and details passed via function parameters
 ---
 
 	function boost.generate( wksp, toolset, installDir )
@@ -37,3 +45,11 @@
 
 	    os.chdir( p )
 	end
+
+
+
+---
+--  Assign the boost generator to the internal generators list.
+---
+	
+	newgenerator( b.boost )

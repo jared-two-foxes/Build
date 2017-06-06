@@ -33,5 +33,5 @@
       buildCmd = buildCmd .. " /project " .. prj
     end
 
-    os.execute( buildCmd .. " >> msvc_output.txt" )  
+    os.execute( buildCmd .. " >> compile.txt" )  
 	end

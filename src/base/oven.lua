@@ -11,34 +11,13 @@
   local oven = b.oven
 
 
----
--- Set the action to be performed from the command line arguments.
----
-
-  function oven.prepareAction()
-    print( _ACTION )
-
-    -- The "next-gen" actions have now replaced their deprecated counterparts.
-    -- Provide a warning for a little while before I remove them entirely.
-    if _ACTION and _ACTION:endswith("ng") then
-      b.warnOnce(_ACTION, "'%s' has been deprecated; use '%s' instead", _ACTION, _ACTION:sub(1, -3))
-    end
-    b.action.set(_ACTION)
-
-    -- Allow the action to initialize stuff.
-    local action = b.action.current()
-    if action then
-      b.action.initialize(action.trigger)
-    end
-  end
-
 
 ---
 -- Override point, for logic that should run after validation and
 -- before the action takes control.
 ---
 
-  function oven.preAction( wksp )
+  function oven.preGeneration( wksp )
     printf("Generating project '%s'...", wksp.name)
 
     -- Create a folder for the project in the 'build' directory and enter it
@@ -66,21 +45,30 @@
 
   function oven.execute( wksp, toolset, config )
     if wksp.system then
-      local a = b.action.get( wksp.system )
+      local a = b.generator.get( wksp.system )
     
       if a ~= nil then
         local installDir = path.join( _MAIN_SCRIPT_DIR, "_external" )
 
-        if a.onGenerate then
-          a.onGenerate( wksp, toolset, installDir )
+        if a.generate then
+          if os.isfile( "generate.log" ) then
+            os.remove( "generate.log" )
+          end
+          a.generate( wksp, toolset, installDir )
         end
 
-        if a.onCompile then
-          a.onCompile( wksp, toolset, config )
+        if a.compile then
+          if os.isfile( "compile.log" ) then
+            os.remove( "compile.log" )
+          end
+          a.compile( wksp, toolset, config )
         end
 
-        if a.onInstall then
-          a.onInstall( wksp, installDir, config )
+        if a.install then
+          if os.isfile( "install.log" ) then
+            os.remove( "install.log" )
+          end
+          a.install( wksp, installDir, config )
         end
       else
         print( "err: Unable to find generator '" .. wksp.system "'" )
@@ -95,7 +83,7 @@
 -- Processing is complete, rest the build state.
 ---
 
-  function oven.postAction()
+  function oven.postGeneration()
     -- return to the root build directory
     os.chdir( path.join( _MAIN_SCRIPT_DIR, "_build" ) )
   end
@@ -178,9 +166,9 @@
     end
 
     -- Generate, build and install this workspace.
-    oven.preAction( workspace )
+    oven.preGeneration( workspace )
     oven.execute( workspace, toolset, config )
-    oven.postAction( workspace );
+    oven.postGeneration( workspace );
   end
 
 

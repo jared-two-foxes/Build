@@ -21,6 +21,17 @@
 
 
 --
+-- Define a new generator.
+--
+-- @param opt
+--    The new generator object.
+--
+
+	function newgenerator(g)
+		b.generator.add(g)
+	end
+
+--
 -- Define a new option.
 --
 -- @param opt
@@ -30,3 +41,5 @@
 	function newoption(opt)
 		b.option.add(opt)
 	end
+
+
