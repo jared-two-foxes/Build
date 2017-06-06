@@ -114,7 +114,7 @@
 
     --todo; Handle the case where name doesn't exist.
 
-    local l = b.libraries[ parts[1] ] -- because lua is 1 based.
+    l = b.libraries[ parts[1] ] -- because lua is 1 based.
     if l ~= nil then
       if l.system == "premake5" then
         -- This entry simply points to a workspace file go grab that and merge it with this entry.

@@ -21,7 +21,5 @@
 		buildCmd = buildCmd .. " --outdir=" .. os.getcwd()
 		buildCmd = buildCmd .. " " .. toolset 
 
-		print( os.getcwd() )
-		print( buildCmd )
   		os.execute( buildCmd .. ">> generate.log " )
 	end

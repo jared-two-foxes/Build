@@ -29,27 +29,23 @@
 		end,
 
 		onInstall = function( wksp, installDir, configuration )
+
 			if installDir ~= nil then
-				b.raw.copyFiles( 
+				b.raw.copyFilesWithDirectory( 
 					path.join( wksp.path, "Source" ), 
-					path.join( installDir, "include", wksp.name ),
+					path.join( installDir, "include" ),
 					b.raw.headers )
+	
+				b.raw.copyFiles( 
+					path.join( _WORKING_DIR, "_build", wksp.name ), 
+					path.join( installDir, "lib" ), 
+					b.raw.libraries )
+
+				b.raw.copyFiles( 
+					path.join( _WORKING_DIR, "_build", wksp.name ), 
+					path.join( installDir, "bin" ), 
+					b.raw.binaries )
 			end
-
-			local p = wksp.name
-			if installDir ~= nil then
-				p = installDir 
-			end
-
-			b.raw.copyFiles( 
-				path.join( _BUILD_DIR, "_build", wksp.name ), 
-				path.join( p, "lib" ), 
-				b.raw.libraries )
-
-			b.raw.copyFiles( 
-				path.join( _BUILD_DIR, "_build", wksp.name ), 
-				path.join( p, "bin" ), 
-				b.raw.binaries )
 		end,
 	}
 
