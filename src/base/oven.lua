@@ -138,18 +138,8 @@
       end
     end
 
-    if workspace.libraries then
-      for _, project in pairs(workspace.libraries) do
-        if project.dependencies then
-          for _, name in pairs(project.dependencies) do
-            dependencies[name] = extractLibrary(name)
-          end
-        end
-      end
-    end
-
-    if workspace.binaries then
-      for _, project in pairs(workspace.binaries) do
+    if workspace.projects then
+      for _, project in pairs(workspace.projects) do
         if project.dependencies then
           for _, name in pairs(project.dependencies) do
             dependencies[name] = extractLibrary(name)
