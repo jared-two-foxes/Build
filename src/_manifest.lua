@@ -48,6 +48,7 @@
 		"generators/boost.lua",
 		"generators/cmake.lua",
 		"generators/premake.lua",
+		"generators/genie.lua",
 
 
 		-- Clean action

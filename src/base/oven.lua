@@ -44,7 +44,7 @@
 ---
 
   function oven.execute( wksp, toolset, config )
-    if wksp.system then
+    if wksp.system ~= nil then
       local a = b.generator.get( wksp.system )
     
       if a ~= nil then
@@ -147,7 +147,7 @@
         end
       end
     end
-
+    
     -- Recurse the build call on each dependency.
     if dependencies then  
       for _, library in pairs(dependencies) do
